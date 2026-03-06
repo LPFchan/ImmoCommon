@@ -7,11 +7,13 @@
 #include <InternalFileSystem.h>
 
 #include "guillemot_config.h"
-#include "guillemot_secrets.h"
 
 using namespace Adafruit_LittleFS_Namespace;
 
 namespace {
+
+// Default PSK when not yet provisioned via Whimbrel (zeros).
+static constexpr uint8_t k_default_psk[16] = {0};
 
 static constexpr const char* COUNTER_LOG_PATH = "/ctr.log";
 static constexpr const char* PSK_STORAGE_PATH = "/psk.bin";
@@ -146,7 +148,18 @@ static bool hex_byte(const char* hex, uint8_t* out) {
   return true;
 }
 
-// Wait for a line starting with "PROV:" up to PROV_TIMEOUT_MS. Parse PROV:DEVICE_ID:KEY_HEX:COUNTER_HEX.
+// CRC-16-CCITT (poly 0x1021, init 0xFFFF) over data. Used for PROV checksum.
+static uint16_t crc16_ccitt(const uint8_t* data, size_t len) {
+  uint16_t crc = 0xFFFFu;
+  for (size_t i = 0; i < len; i++) {
+    crc ^= (uint16_t)data[i] << 8;
+    for (int k = 0; k < 8; k++)
+      crc = (crc & 0x8000u) ? (uint16_t)((crc << 1) ^ 0x1021u) : (uint16_t)(crc << 1);
+  }
+  return crc;
+}
+
+// Wait for "PROV:DEVICE_ID:KEY_HEX:COUNTER_HEX:CHECKSUM_HEX". CHECKSUM is CRC-16-CCITT of key (4 hex chars).
 // On success: write 16-byte key to PSK_STORAGE_PATH, remove counter log, print ACK:PROV_SUCCESS, return true.
 // On malformed: print ERR:MALFORMED, return false. On timeout: return false.
 static bool prov_run_serial_loop() {
@@ -172,15 +185,21 @@ static bool prov_run_serial_loop() {
       const char* rest = line + 5;
       const char* col1 = strchr(rest, ':');
       const char* col2 = col1 ? strchr(col1 + 1, ':') : nullptr;
-      if (!col1 || !col2) {
+      const char* col3 = col2 ? strchr(col2 + 1, ':') : nullptr;
+      if (!col1 || !col2 || !col3) {
         Serial.println("ERR:MALFORMED");
         return false;
       }
       const char* key_hex = col1 + 1;
       const char* counter_hex = col2 + 1;
+      const char* checksum_hex = col3 + 1;
       size_t key_len = (size_t)(col2 - key_hex);
-      size_t counter_len = strlen(counter_hex);
+      size_t counter_len = (size_t)(col3 - counter_hex);
       if (key_len != PROV_KEY_HEX_LEN || counter_len != PROV_COUNTER_HEX_LEN) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      if (strlen(checksum_hex) < 4) {
         Serial.println("ERR:MALFORMED");
         return false;
       }
@@ -191,15 +210,47 @@ static bool prov_run_serial_loop() {
           return false;
         }
       }
+      uint8_t checksum_hi = 0, checksum_lo = 0;
+      if (!hex_byte(checksum_hex, &checksum_hi) || !hex_byte(checksum_hex + 2, &checksum_lo)) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      uint16_t checksum_received = (uint16_t)checksum_hi << 8 | checksum_lo;
+      if (crc16_ccitt(key_buf, 16) != checksum_received) {
+        Serial.println("ERR:CHECKSUM");
+        return false;
+      }
       InternalFS.remove(PSK_STORAGE_PATH);
       Adafruit_LittleFS_Namespace::File f(
           InternalFS.open(PSK_STORAGE_PATH, FILE_O_WRITE));
       if (!f) {
-        Serial.println("ERR:MALFORMED");
+        Serial.println("ERR:WRITE");
         return false;
       }
       f.write(key_buf, 16);
       f.flush();
+      f.close();
+
+      // Verify: read back and compare key.
+      Adafruit_LittleFS_Namespace::File fr(
+          InternalFS.open(PSK_STORAGE_PATH, FILE_O_READ));
+      if (!fr || fr.size() != 16) {
+        Serial.println("ERR:VERIFY_FAIL");
+        return false;
+      }
+      uint8_t read_key[16];
+      if (fr.read(read_key, 16) != 16) {
+        Serial.println("ERR:VERIFY_FAIL");
+        return false;
+      }
+      bool key_ok = true;
+      for (int i = 0; i < 16; i++)
+        if (read_key[i] != key_buf[i]) { key_ok = false; break; }
+      if (!key_ok) {
+        Serial.println("ERR:VERIFY_FAIL");
+        return false;
+      }
+
       InternalFS.remove(COUNTER_LOG_PATH);
       Serial.println("ACK:PROV_SUCCESS");
       memcpy(g_psk, key_buf, 16);
@@ -210,6 +261,12 @@ static bool prov_run_serial_loop() {
   return false;
 }
 
+static bool key_is_all_zeros() {
+  for (int i = 0; i < 16; i++)
+    if (g_psk[i] != 0) return false;
+  return true;
+}
+
 // Load g_psk from InternalFS if /psk.bin exists (16 bytes), else use compile-time default.
 static void load_psk_from_storage() {
   Adafruit_LittleFS_Namespace::File f(
@@ -217,7 +274,7 @@ static void load_psk_from_storage() {
   if (f && f.size() == 16 && f.read(g_psk, 16) == 16) {
     return;
   }
-  memcpy(g_psk, GUILLEMOT_PSK, 16);
+  memcpy(g_psk, k_default_psk, 16);
 }
 
 bool aes128_ecb_encrypt(const uint8_t key[16], const uint8_t in[16], uint8_t out[16]) {
@@ -395,11 +452,17 @@ void setup() {
     Serial.println("InternalFS begin failed");
   }
 
-  // Whimbrel provisioning: if powered over USB, wait up to 30s for PROV: line.
+  load_psk_from_storage();
+  // When on USB, always offer one 30s provisioning window (re-provision or first time).
   if (prov_is_vbus_present()) {
     prov_run_serial_loop();
+    load_psk_from_storage();
   }
-  load_psk_from_storage();
+  // If still not provisioned (key all zeros) and on USB, stay in provisioning until PROV or unplug.
+  while (key_is_all_zeros() && prov_is_vbus_present()) {
+    prov_run_serial_loop();
+    load_psk_from_storage();
+  }
 
   g_store.load();
 
@@ -413,6 +476,7 @@ void setup() {
   Bluefruit.Scanner.start(0);
 
   Serial.println("Guillemot scanning");
+  Serial.println("BOOTED:Guillemot");
 }
 
 void loop() {

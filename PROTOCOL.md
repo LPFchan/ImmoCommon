@@ -11,7 +11,7 @@ Canonical spec for the encrypted fob → receiver advert format and crypto. The 
 ## Pre-shared key (PSK)
 
 - **128-bit (16 bytes)** AES key. Must be **identical** on the fob and Guillemot.
-- **Provisioning:** Use [Whimbrel](https://github.com/LPFchan/Whimbrel) over Web Serial to write the same key to both devices, or define `guillemot_secrets_local.h` (gitignored) with `GUILLEMOT_PSK_BYTES` (16 comma-separated bytes). Never commit real keys.
+- **Provisioning:** Use [Whimbrel](https://github.com/LPFchan/Whimbrel) over Web Serial to write the same key to both devices. Never commit real keys.
 
 ## Advertising payload (11 bytes)
 

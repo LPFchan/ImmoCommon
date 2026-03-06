@@ -43,9 +43,9 @@ Firmware lives in `firmware/guillemot/`.
 
 Open `firmware/guillemot/` in PlatformIO and use **Build** / **Upload**.
 
-## Provisioning with Whimbrel
+## Initialization
 
-Guillemot supports **Whimbrel** ([github.com/LPFchan/Whimbrel](https://github.com/LPFchan/Whimbrel)), a browser-based provisioning app that injects the same AES-128 key into both Uguisu and Guillemot over Web Serial.
+Guillemot initialises with **Whimbrel** ([github.com/LPFchan/Whimbrel](https://github.com/LPFchan/Whimbrel)), a browser-based provisioning app that injects the same AES-128 key into both Uguisu and Guillemot over Web Serial.
 
 1. Open Whimbrel in Chrome or Edge, generate a secret, and flash the key fob (Uguisu).
 2. Plug the **receiver** (Guillemot) into the PC via USB-C.
@@ -53,21 +53,7 @@ Guillemot supports **Whimbrel** ([github.com/LPFchan/Whimbrel](https://github.co
 
 When the board is powered over USB (VBUS present), it waits up to **30 seconds** for a line of the form:
 
-`PROV:GUILLEMOT_01:<32-hex-key>:00000000`
+`PROV:GUILLEMOT_01:<32-hex-key>:00000000:<4-hex-CRC>` (CRC-16-CCITT of key; device replies `ERR:CHECKSUM` if mismatch)
 
-It then stores the 16-byte key in internal flash (`/psk.bin`) and clears the counter log so the next fob advert is accepted. No `guillemot_secrets_local.h` is required if you provision via Whimbrel.
-
-## Secrets (manual)
-
-Alternatively, create `firmware/guillemot/include/guillemot_secrets_local.h` (gitignored) and define your PSK bytes there.
-
-Example:
-
-```c
-#define GUILLEMOT_PSK_BYTES \
-  0x01, 0x02, 0x03, 0x04,   \
-  0x05, 0x06, 0x07, 0x08,   \
-  0x09, 0x0A, 0x0B, 0x0C,   \
-  0x0D, 0x0E, 0x0F, 0x10
-```
+It then stores the 16-byte key in internal flash (`/psk.bin`) and clears the counter log so the next fob advert is accepted.
 
