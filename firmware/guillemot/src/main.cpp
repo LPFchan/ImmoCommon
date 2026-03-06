@@ -14,7 +14,14 @@ using namespace Adafruit_LittleFS_Namespace;
 namespace {
 
 static constexpr const char* COUNTER_LOG_PATH = "/ctr.log";
+static constexpr const char* PSK_STORAGE_PATH = "/psk.bin";
 static constexpr size_t COUNTER_LOG_MAX_BYTES = 4096;
+static constexpr size_t PROV_TIMEOUT_MS = 30000;
+static constexpr size_t PROV_KEY_HEX_LEN = 32;
+static constexpr size_t PROV_COUNTER_HEX_LEN = 8;
+
+// Runtime key: loaded from flash (Whimbrel-provisioned) or compile-time default.
+uint8_t g_psk[16];
 
 enum class Command : uint8_t {
   Unlock = 0x01,
@@ -63,7 +70,7 @@ public:
     last_device_id_ = 0;
     last_counter_ = 0;
 
-    File f(InternalFS.open(COUNTER_LOG_PATH, FILE_O_READ));
+    Adafruit_LittleFS_Namespace::File f(InternalFS.open(COUNTER_LOG_PATH, FILE_O_READ));
     if (!f) return;
 
     CounterRecord rec{};
@@ -87,9 +94,9 @@ public:
     rec.counter = counter;
     rec.crc32 = record_crc(rec);
 
-    File f(InternalFS.open(COUNTER_LOG_PATH, FILE_O_WRITE | FILE_O_APPEND));
+    Adafruit_LittleFS_Namespace::File f(InternalFS.open(COUNTER_LOG_PATH, FILE_O_WRITE));
     if (!f) return;
-    f.write(reinterpret_cast<const void*>(&rec), sizeof(rec));
+    f.write(reinterpret_cast<const uint8_t*>(&rec), sizeof(rec));
     f.flush();
 
     last_device_id_ = device_id;
@@ -98,7 +105,7 @@ public:
 
 private:
   void rotateIfNeeded_() {
-    File f(InternalFS.open(COUNTER_LOG_PATH, FILE_O_READ));
+    Adafruit_LittleFS_Namespace::File f(InternalFS.open(COUNTER_LOG_PATH, FILE_O_READ));
     if (!f) return;
     const size_t sz = f.size();
     f.close();
@@ -113,6 +120,105 @@ private:
 };
 
 CounterStore g_store;
+
+// --- Whimbrel provisioning (Web Serial PROV: line, 30s timeout) ---
+
+static bool prov_is_vbus_present() {
+#if defined(NRF52840_XXAA) || defined(NRF52833_XXAA)
+  return (NRF_POWER->USBREGSTATUS & POWER_USBREGSTATUS_VBUSDETECT_Msk) != 0;
+#else
+  return false;
+#endif
+}
+
+// Decode two hex chars to one byte; returns false if invalid.
+static bool hex_byte(const char* hex, uint8_t* out) {
+  auto nib = [](char c) -> int {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+  };
+  int hi = nib(hex[0]);
+  int lo = nib(hex[1]);
+  if (hi < 0 || lo < 0) return false;
+  *out = static_cast<uint8_t>((hi << 4) | lo);
+  return true;
+}
+
+// Wait for a line starting with "PROV:" up to PROV_TIMEOUT_MS. Parse PROV:DEVICE_ID:KEY_HEX:COUNTER_HEX.
+// On success: write 16-byte key to PSK_STORAGE_PATH, remove counter log, print ACK:PROV_SUCCESS, return true.
+// On malformed: print ERR:MALFORMED, return false. On timeout: return false.
+static bool prov_run_serial_loop() {
+  const uint32_t deadline = millis() + PROV_TIMEOUT_MS;
+  char line[128];
+  size_t len = 0;
+
+  while (millis() < deadline && len < sizeof(line) - 1) {
+    if (!Serial.available()) {
+      delay(10);
+      continue;
+    }
+    int c = Serial.read();
+    if (c < 0) continue;
+    if (c == '\n' || c == '\r') {
+      line[len] = '\0';
+      if (len == 0) continue;
+
+      if (strncmp(line, "PROV:", 5) != 0) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      const char* rest = line + 5;
+      const char* col1 = strchr(rest, ':');
+      const char* col2 = col1 ? strchr(col1 + 1, ':') : nullptr;
+      if (!col1 || !col2) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      const char* key_hex = col1 + 1;
+      const char* counter_hex = col2 + 1;
+      size_t key_len = (size_t)(col2 - key_hex);
+      size_t counter_len = strlen(counter_hex);
+      if (key_len != PROV_KEY_HEX_LEN || counter_len != PROV_COUNTER_HEX_LEN) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      uint8_t key_buf[16];
+      for (size_t i = 0; i < 16; i++) {
+        if (!hex_byte(key_hex + i * 2, &key_buf[i])) {
+          Serial.println("ERR:MALFORMED");
+          return false;
+        }
+      }
+      InternalFS.remove(PSK_STORAGE_PATH);
+      Adafruit_LittleFS_Namespace::File f(
+          InternalFS.open(PSK_STORAGE_PATH, FILE_O_WRITE));
+      if (!f) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      f.write(key_buf, 16);
+      f.flush();
+      InternalFS.remove(COUNTER_LOG_PATH);
+      Serial.println("ACK:PROV_SUCCESS");
+      memcpy(g_psk, key_buf, 16);
+      return true;
+    }
+    line[len++] = (char)c;
+  }
+  return false;
+}
+
+// Load g_psk from InternalFS if /psk.bin exists (16 bytes), else use compile-time default.
+static void load_psk_from_storage() {
+  Adafruit_LittleFS_Namespace::File f(
+      InternalFS.open(PSK_STORAGE_PATH, FILE_O_READ));
+  if (f && f.size() == 16 && f.read(g_psk, 16) == 16) {
+    return;
+  }
+  memcpy(g_psk, GUILLEMOT_PSK, 16);
+}
 
 bool aes128_ecb_encrypt(const uint8_t key[16], const uint8_t in[16], uint8_t out[16]) {
   nrf_ecb_hal_data_t ecb{};
@@ -240,7 +346,7 @@ bool verify_payload(const Payload& pl) {
   msg[6] = static_cast<uint8_t>(pl.command);
 
   uint8_t expected[MIC_LEN];
-  if (!ccm_mic_4(GUILLEMOT_PSK, nonce, msg, sizeof(msg), expected)) return false;
+  if (!ccm_mic_4(g_psk, nonce, msg, sizeof(msg), expected)) return false;
   return constant_time_eq(expected, pl.mic, MIC_LEN);
 }
 
@@ -288,6 +394,13 @@ void setup() {
   if (!g_store.begin()) {
     Serial.println("InternalFS begin failed");
   }
+
+  // Whimbrel provisioning: if powered over USB, wait up to 30s for PROV: line.
+  if (prov_is_vbus_present()) {
+    prov_run_serial_loop();
+  }
+  load_psk_from_storage();
+
   g_store.load();
 
   Bluefruit.begin(0, 1);

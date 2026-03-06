@@ -36,7 +36,7 @@ def main() -> None:
     ap.add_argument("--device-id", type=parse_int, required=True)
     ap.add_argument("--counter", type=parse_int, required=True)
     ap.add_argument("--command", type=parse_int, required=True)
-    ap.add_argument("--company-id", type=parse_int, default=0xFFFF)
+    ap.add_argument("--company-id", type=parse_int, default=0xFFFF, help="Must match MSD_COMPANY_ID (default 0xFFFF)")
     ap.add_argument("--key", type=str, required=True, help="32 hex chars (16 bytes)")
     args = ap.parse_args()
 

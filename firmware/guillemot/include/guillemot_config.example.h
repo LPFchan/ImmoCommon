@@ -9,8 +9,8 @@ static constexpr int PIN_BUZZER = D3;
 static constexpr uint16_t SCAN_INTERVAL_MS = 2000;
 static constexpr uint16_t SCAN_WINDOW_MS = 20;
 
-// Manufacturer Specific Data company ID used to filter adverts.
-// The advertising MSD payload format is: [company_id_le(2)] + [11-byte protocol payload]
+// Manufacturer Specific Data company ID (2 bytes, little-endian in adverts).
+// Set to your chosen value; must match the fob when you use one. See PROTOCOL.md.
 static constexpr uint16_t MSD_COMPANY_ID = 0xFFFF;
 
 // Protocol sizes
