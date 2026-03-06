@@ -22,7 +22,7 @@ The firmware is a [PlatformIO](https://platformio.org/) project located in `firm
 
 ## Protocol
 
-- **BLE**: Advertisement-based. Listens for Manufacturer Specific Data containing a 2-byte device ID, 4-byte monotonic counter, 1-byte command (0x01=unlock, 0x02=lock), and 4-byte AES-CCM Message Integrity Code (MIC).
+- **BLE**: Advertisement-based. Listens for Manufacturer Specific Data containing a 4-byte monotonic counter, 1-byte command (0x01=unlock, 0x02=lock), and 4-byte AES-CCM Message Integrity Code (MIC).
 - **Shared Library**: Payload validation and cryptography are handled by [ImmoCommon](https://github.com/LPFchan/ImmoCommon).
 
 ## Onboarding
