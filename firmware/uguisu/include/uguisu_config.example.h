@@ -11,6 +11,9 @@
 // Pick a real GPIO used in your Uguisu hardware.
 #define UGUISU_PIN_BUTTON D1
 
+// nRF52840 P0.x for wake-from-system-off (must match UGUISU_PIN_BUTTON; e.g. XIAO D1 = P0.03).
+#define UGUISU_PIN_BUTTON_NRF 3
+
 // How long to advertise after a press (ms).
 #define UGUISU_ADVERTISE_MS 2000
 
@@ -18,5 +21,5 @@
 #define UGUISU_ADV_INTERVAL_MS 100
 
 // Long-press threshold for lock command (ms). Press >= this = Lock, else Unlock.
-#define UGUISU_LONG_PRESS_MS 2000
+#define UGUISU_LONG_PRESS_MS 1000
 

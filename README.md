@@ -14,8 +14,8 @@ This repository contains the **Uguisu fob firmware and hardware design files**. 
 ## Firmware
 
 The firmware is a [PlatformIO](https://platformio.org/) project located in `firmware/uguisu/`.
-- **Boot Routine**: Checks `VBUSDETECT`. If USB is connected, it enters Whimbrel Provisioning Mode. If battery powered, it initializes BLE, reads/increments the counter in NVS, generates the AES-128-CCM payload, broadcasts for ~2 seconds, and then enters deep sleep (`sd_power_system_off`).
-- **Locking**: A lock command requires a 2-second long press.
+- **Boot Routine**: Checks `VBUSDETECT`. If USB is connected, it enters Whimbrel Provisioning Mode. If battery powered, it initializes BLE, reads/increments the counter in NVS, generates the AES-128-CCM payload, broadcasts for ~2 seconds, and then enters deep sleep (`sd_power_system_off`). The next button press wakes the MCU via GPIO (hardware SENSE); the device then boots and again waits for a press.
+- **Locking**: A lock command requires a 1-second long press.
 
 ## Protocol
 

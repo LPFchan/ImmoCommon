@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 #include <bluefruit.h>
+#include <nrf_gpio.h>
 #include <nrf_soc.h>
 
 #include <Adafruit_LittleFS.h>
@@ -123,6 +124,9 @@ void start_advertising_once(uint16_t company_id, const uint8_t payload11[immo::P
 void system_off() {
   Bluefruit.Advertising.stop();
   delay(10);
+#ifdef UGUISU_PIN_BUTTON_NRF
+  nrf_gpio_cfg_sense_input(UGUISU_PIN_BUTTON_NRF, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+#endif
   sd_power_system_off();
 }
 
