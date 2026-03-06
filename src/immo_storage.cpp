@@ -55,6 +55,7 @@ void CounterStore::update(uint32_t counter) {
   rec.counter = counter;
   rec.crc32 = record_crc(rec.counter);
 
+  // FILE_O_WRITE in Adafruit LittleFS seeks to end (append), enabling power-loss recovery.
   Adafruit_LittleFS_Namespace::File f(InternalFS.open(log_path_, Adafruit_LittleFS_Namespace::FILE_O_WRITE));
   if (!f) return;
   f.write(reinterpret_cast<const uint8_t*>(&rec), sizeof(rec));
