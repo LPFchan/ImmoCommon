@@ -13,10 +13,6 @@ static constexpr uint16_t SCAN_WINDOW_MS = 20;
 // Set to your chosen value; must match the fob when you use one. See PROTOCOL.md.
 static constexpr uint16_t MSD_COMPANY_ID = 0xFFFF;
 
-// Protocol sizes
-static constexpr size_t PAYLOAD_LEN = 11;
-static constexpr size_t MIC_LEN = 4;
-
 // Buzzer settings
 static constexpr uint16_t BUZZER_HZ = 4000;
 static constexpr uint16_t BUZZER_UNLOCK_MS = 120;
