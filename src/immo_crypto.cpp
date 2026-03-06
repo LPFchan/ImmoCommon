@@ -37,16 +37,14 @@ void xor_block(uint8_t dst[16], const uint8_t a[16], const uint8_t b[16]) {
 
 }  // namespace
 
-void build_nonce(uint16_t device_id, uint32_t counter, uint8_t nonce[NONCE_LEN]) {
-  le16_write(&nonce[0], device_id);
-  le32_write(&nonce[2], counter);
-  for (size_t i = 6; i < NONCE_LEN; i++) nonce[i] = 0;
+void build_nonce(uint32_t counter, uint8_t nonce[NONCE_LEN]) {
+  le32_write(&nonce[0], counter);
+  for (size_t i = 4; i < NONCE_LEN; i++) nonce[i] = 0;
 }
 
-void build_msg(uint16_t device_id, uint32_t counter, Command command, uint8_t msg[MSG_LEN]) {
-  le16_write(&msg[0], device_id);
-  le32_write(&msg[2], counter);
-  msg[6] = static_cast<uint8_t>(command);
+void build_msg(uint32_t counter, Command command, uint8_t msg[MSG_LEN]) {
+  le32_write(&msg[0], counter);
+  msg[4] = static_cast<uint8_t>(command);
 }
 
 bool ccm_mic_4(const uint8_t key[16], const uint8_t nonce[NONCE_LEN], const uint8_t* msg, size_t msg_len, uint8_t out_mic[MIC_LEN]) {

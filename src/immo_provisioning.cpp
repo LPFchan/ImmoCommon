@@ -18,23 +18,6 @@ bool hex_byte(const char* hex, uint8_t* out) {
   return true;
 }
 
-uint16_t prov_parse_device_id(const char* dev_id, size_t len) {
-  const char* p = dev_id;
-  while (len > 0 && *p != '_') {
-    p++;
-    len--;
-  }
-  if (len == 0 || *p != '_') return 0xFFFF;
-  p++;
-  len--;
-  unsigned int val = 0;
-  for (; len > 0 && *p; p++, len--) {
-    if (*p < '0' || *p > '9') return 0xFFFF;
-    val = val * 10 + (unsigned int)(*p - '0');
-  }
-  return val > 0xFFFF ? 0xFFFF : static_cast<uint16_t>(val);
-}
-
 bool parse_counter_hex(const char* hex, uint32_t* out) {
   uint32_t val = 0;
   for (int i = 0; i < 8; i++) {
@@ -69,7 +52,7 @@ bool prov_is_vbus_present() {
 #endif
 }
 
-bool prov_run_serial_loop(uint32_t timeout_ms, bool (*on_success)(uint16_t, const uint8_t[16], uint32_t)) {
+bool prov_run_serial_loop(uint32_t timeout_ms, bool (*on_success)(const uint8_t[16], uint32_t)) {
   const uint32_t deadline = millis() + timeout_ms;
   char line[128];
   size_t len = 0;
@@ -92,23 +75,15 @@ bool prov_run_serial_loop(uint32_t timeout_ms, bool (*on_success)(uint16_t, cons
       const char* rest = line + 5;
       const char* col1 = strchr(rest, ':');
       const char* col2 = col1 ? strchr(col1 + 1, ':') : nullptr;
-      const char* col3 = col2 ? strchr(col2 + 1, ':') : nullptr;
-      if (!col1 || !col2 || !col3) {
+      if (!col1 || !col2) {
         Serial.println("ERR:MALFORMED");
         return false;
       }
-      size_t dev_id_len = (size_t)(col1 - rest);
-      const char* key_hex = col1 + 1;
-      const char* counter_hex = col2 + 1;
-      const char* checksum_hex = col3 + 1;
+      const char* key_hex = rest;
+      const char* counter_hex = col1 + 1;
+      const char* checksum_hex = col2 + 1;
       
-      if ((size_t)(col2 - key_hex) != 32 || (size_t)(col3 - counter_hex) != 8 || strlen(checksum_hex) < 4) {
-        Serial.println("ERR:MALFORMED");
-        return false;
-      }
-
-      uint16_t device_id = prov_parse_device_id(rest, dev_id_len);
-      if (device_id == 0xFFFF) {
+      if ((size_t)(col1 - key_hex) != 32 || (size_t)(col2 - counter_hex) != 8 || strlen(checksum_hex) < 4) {
         Serial.println("ERR:MALFORMED");
         return false;
       }
@@ -137,7 +112,7 @@ bool prov_run_serial_loop(uint32_t timeout_ms, bool (*on_success)(uint16_t, cons
         return false;
       }
 
-      if (on_success && on_success(device_id, key_buf, counter_val)) {
+      if (on_success && on_success(key_buf, counter_val)) {
         Serial.println("ACK:PROV_SUCCESS");
         return true;
       }
@@ -150,7 +125,7 @@ bool prov_run_serial_loop(uint32_t timeout_ms, bool (*on_success)(uint16_t, cons
 
 void ensure_provisioned(
     uint32_t timeout_ms,
-    bool (*on_success)(uint16_t, const uint8_t[16], uint32_t),
+    bool (*on_success)(const uint8_t[16], uint32_t),
     void (*load_provisioning)(),
     bool (*is_provisioned)()
 ) {
