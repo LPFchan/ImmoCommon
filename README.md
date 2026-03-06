@@ -2,47 +2,33 @@
 
 Uguisu is the **BLE key fob** module of a three-part immobilizer system (Uguisu fob + [Guillemot](https://github.com/LPFchan/Guillemot) receiver + [Whimbrel](https://github.com/LPFchan/Whimbrel) web app) for the Ninebot Max G30. It broadcasts short, encrypted BLE advertisements on button press.
 
-This repository contains the **Uguisu fob firmware + hardware design files**. Note that shared protocol and cryptography logic is implemented in the [ImmoCommon](https://github.com/LPFchan/ImmoCommon) submodule.
+This repository contains the **Uguisu fob firmware and hardware design files**. Note that shared protocol and cryptography logic is implemented in the [ImmoCommon](https://github.com/LPFchan/ImmoCommon) submodule.
 
-- KiCad project files:
-  - `Uguisu.kicad_sch`
-  - `Uguisu.kicad_pcb`
+## Hardware
 
-## Firmware (PlatformIO)
+- **MCU**: Seeed Studio XIAO nRF52840
+- **PCB Design**: KiCad (`Uguisu.kicad_sch` / `Uguisu.kicad_pcb`)
 
-Firmware lives in `firmware/uguisu/` and targets the Seeed XIAO nRF52840 (Bluefruit).
+## Firmware
 
-### Build / upload
+The firmware is a [PlatformIO](https://platformio.org/) project located in `firmware/uguisu/`.
+- Open the folder in VSCode/Cursor with the PlatformIO extension.
+- Build and upload via USB.
 
-- Install PlatformIO (VSCode/Cursor extension)
-- Open `firmware/uguisu/` as a PlatformIO project
-- Use **Build** / **Upload**
+## Provisioning
 
-### Initialization
+Uguisu must be initialized with the [Whimbrel](https://github.com/LPFchan/Whimbrel) web app.
+- Connect the fob via USB and use Whimbrel to inject a shared AES-128 key.
+- The key and anti-replay counter are stored persistently in internal flash.
 
-Uguisu initialises with [Whimbrel](https://github.com/LPFchan/Whimbrel), a browser-based provisioning app that injects the same AES key and counter into the fob and the receiver over Web Serial.
+## Protocol
 
-- **When powered over USB:** On boot, Uguisu checks for VBUS. If present, it waits up to 30 seconds for a line `PROV:DEVICE_ID:KEY_HEX:COUNTER_HEX:CHECKSUM_HEX` (e.g. `PROV:UGUISU_01:<32 hex chars>:00000000:<4 hex CRC>`). The checksum is CRC-16-CCITT of the key; if it does not match, the device replies `ERR:CHECKSUM`. On success it writes the key and device ID to internal flash, seeds the anti-replay counter log, and replies `ACK:PROV_SUCCESS`. If no valid line is received, it continues to normal operation (one-shot advertise then system off).
-- **Runtime:** If `/ug_prov.bin` exists from a prior Whimbrel session, the fob uses that key and device ID; otherwise it uses a default (zeros) and the config device ID. The device ID string (e.g. `UGUISU_01`) is parsed to a 16-bit value for the BLE payload (e.g. `01` → 1).
+- **BLE**: Broadcasts Manufacturer Specific Data containing a device ID, counter, command, and 4-byte AES-CCM Message Integrity Code (MIC).
+- **Shared Library**: Payload generation and cryptography are handled by [ImmoCommon](https://github.com/LPFchan/ImmoCommon).
+- *Note: A script to generate test vectors is available in `tools/test_vectors/`.*
 
-### Protocol compatibility (Uguisu ↔ Guillemot)
+## Safety & Notes
 
-The fob transmits manufacturer-specific data containing:
-
-- `company_id(2) | payload(11)`
-- `payload(11) = device_id(2) | counter(4) | command(1) | mic(4)`
-
-The MIC is a 4-byte AES-CCM tag using:
-
-- `nonce(13) = le16(device_id) | le32(counter) | 0x00*7`
-- `msg(7) = le16(device_id) | le32(counter) | command`
-
-## Test vectors
-
-See `tools/test_vectors/` for a small script that generates expected MIC values for interoperability testing.
-
-## Notes
-
-- This repo intentionally avoids committing KiCad per-user state (`*.kicad_prl`) and backup/lock artifacts.
-- Safety: do not test power-interrupt/lock behavior while riding.
-
+- **Safety**: This is a prototype security device. Use at your own risk. Do not test lock behavior while riding.
+- **Legal**: Not affiliated with Segway-Ninebot.
+- **Repo**: Please avoid committing KiCad per-user state (`*.kicad_prl`) or lock files.
