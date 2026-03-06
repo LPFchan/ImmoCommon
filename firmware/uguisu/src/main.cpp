@@ -8,11 +8,13 @@
 
 #include "uguisu_config.h"
 #include "uguisu_protocol.h"
-#include "uguisu_secrets.h"
 
 using namespace Adafruit_LittleFS_Namespace;
 
 namespace {
+
+// Default PSK when not yet provisioned via Whimbrel (zeros).
+static constexpr uint8_t k_default_psk[16] = {0};
 
 static constexpr const char* COUNTER_LOG_PATH = "/ug_ctr.log";
 static constexpr const char* PROV_STORAGE_PATH = "/ug_prov.bin";
@@ -157,7 +159,19 @@ static bool parse_counter_hex(const char* hex, uint32_t* out) {
   return true;
 }
 
-// Wait for "PROV:DEVICE_ID:KEY_HEX:COUNTER_HEX". On success write /ug_prov.bin, seed counter log, send ACK, return true.
+// CRC-16-CCITT (poly 0x1021, init 0xFFFF) over data. Used for PROV checksum.
+static uint16_t crc16_ccitt(const uint8_t* data, size_t len) {
+  uint16_t crc = 0xFFFFu;
+  for (size_t i = 0; i < len; i++) {
+    crc ^= (uint16_t)data[i] << 8;
+    for (int k = 0; k < 8; k++)
+      crc = (crc & 0x8000u) ? (uint16_t)((crc << 1) ^ 0x1021u) : (uint16_t)(crc << 1);
+  }
+  return crc;
+}
+
+// Wait for "PROV:DEVICE_ID:KEY_HEX:COUNTER_HEX:CHECKSUM_HEX". CHECKSUM is CRC-16-CCITT of key (4 hex chars).
+// On success write /ug_prov.bin, seed counter log, send ACK, return true.
 static bool prov_run_serial_loop() {
   const uint32_t deadline = millis() + PROV_TIMEOUT_MS;
   char line[128];
@@ -181,16 +195,22 @@ static bool prov_run_serial_loop() {
       const char* rest = line + 5;
       const char* col1 = strchr(rest, ':');
       const char* col2 = col1 ? strchr(col1 + 1, ':') : nullptr;
-      if (!col1 || !col2) {
+      const char* col3 = col2 ? strchr(col2 + 1, ':') : nullptr;
+      if (!col1 || !col2 || !col3) {
         Serial.println("ERR:MALFORMED");
         return false;
       }
       size_t dev_id_len = (size_t)(col1 - rest);
       const char* key_hex = col1 + 1;
       const char* counter_hex = col2 + 1;
+      const char* checksum_hex = col3 + 1;
       size_t key_len = (size_t)(col2 - key_hex);
-      size_t counter_len = strlen(counter_hex);
+      size_t counter_len = (size_t)(col3 - counter_hex);
       if (key_len != PROV_KEY_HEX_LEN || counter_len != PROV_COUNTER_HEX_LEN) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      if (strlen(checksum_hex) < 4) {
         Serial.println("ERR:MALFORMED");
         return false;
       }
@@ -214,10 +234,21 @@ static bool prov_run_serial_loop() {
         return false;
       }
 
+      uint8_t checksum_hi = 0, checksum_lo = 0;
+      if (!hex_byte(checksum_hex, &checksum_hi) || !hex_byte(checksum_hex + 2, &checksum_lo)) {
+        Serial.println("ERR:MALFORMED");
+        return false;
+      }
+      uint16_t checksum_received = (uint16_t)checksum_hi << 8 | checksum_lo;
+      if (crc16_ccitt(key_buf, 16) != checksum_received) {
+        Serial.println("ERR:CHECKSUM");
+        return false;
+      }
+
       InternalFS.remove(PROV_STORAGE_PATH);
       Adafruit_LittleFS_Namespace::File f(InternalFS.open(PROV_STORAGE_PATH, FILE_O_WRITE));
       if (!f) {
-        Serial.println("ERR:MALFORMED");
+        Serial.println("ERR:WRITE");
         return false;
       }
       f.write(reinterpret_cast<const uint8_t*>(&PROV_MAGIC), 4);
@@ -225,6 +256,31 @@ static bool prov_run_serial_loop() {
       f.write(reinterpret_cast<const uint8_t*>(&device_id), 2);
       f.write(reinterpret_cast<const uint8_t*>(&counter_val), 4);
       f.flush();
+      f.close();
+
+      // Verify: read back and compare key + device_id.
+      Adafruit_LittleFS_Namespace::File fr(InternalFS.open(PROV_STORAGE_PATH, FILE_O_READ));
+      if (!fr || fr.size() < 22) {
+        Serial.println("ERR:VERIFY_FAIL");
+        return false;
+      }
+      uint32_t read_magic = 0;
+      uint8_t read_key[16];
+      uint16_t read_device_id = 0;
+      if (fr.read(reinterpret_cast<uint8_t*>(&read_magic), 4) != 4 ||
+          read_magic != PROV_MAGIC ||
+          fr.read(read_key, 16) != 16 ||
+          fr.read(reinterpret_cast<uint8_t*>(&read_device_id), 2) != 2) {
+        Serial.println("ERR:VERIFY_FAIL");
+        return false;
+      }
+      bool key_ok = true;
+      for (int i = 0; i < 16; i++)
+        if (read_key[i] != key_buf[i]) { key_ok = false; break; }
+      if (!key_ok || read_device_id != device_id) {
+        Serial.println("ERR:VERIFY_FAIL");
+        return false;
+      }
 
       g_store.seed(counter_val);
       memcpy(g_psk, key_buf, 16);
@@ -238,11 +294,17 @@ static bool prov_run_serial_loop() {
   return false;
 }
 
+static bool key_is_all_zeros() {
+  for (int i = 0; i < 16; i++)
+    if (g_psk[i] != 0) return false;
+  return true;
+}
+
 // Load key and device_id from /ug_prov.bin if present and valid; else use compile-time defaults.
 static void load_provisioning() {
   Adafruit_LittleFS_Namespace::File f(InternalFS.open(PROV_STORAGE_PATH, FILE_O_READ));
   if (!f || f.size() < 26) {
-    memcpy(g_psk, UGUISU_PSK, 16);
+    memcpy(g_psk, k_default_psk, 16);
     g_device_id = UGUISU_DEVICE_ID;
     g_has_provisioning = false;
     return;
@@ -250,13 +312,13 @@ static void load_provisioning() {
   uint32_t magic = 0;
   f.read(reinterpret_cast<uint8_t*>(&magic), 4);
   if (magic != PROV_MAGIC) {
-    memcpy(g_psk, UGUISU_PSK, 16);
+    memcpy(g_psk, k_default_psk, 16);
     g_device_id = UGUISU_DEVICE_ID;
     g_has_provisioning = false;
     return;
   }
   if (f.read(g_psk, 16) != 16 || f.read(reinterpret_cast<uint8_t*>(&g_device_id), 2) != 2) {
-    memcpy(g_psk, UGUISU_PSK, 16);
+    memcpy(g_psk, k_default_psk, 16);
     g_device_id = UGUISU_DEVICE_ID;
     g_has_provisioning = false;
     return;
@@ -300,12 +362,19 @@ void setup() {
 
   if (!g_store.begin()) system_off();
 
-  // Whimbrel provisioning: if powered over USB, wait up to 30s for PROV: line.
+  load_provisioning();
+  // When on USB, always offer one 30s provisioning window (re-provision or first time).
   if (prov_is_vbus_present()) {
     prov_run_serial_loop();
+    load_provisioning();
   }
-  load_provisioning();
+  // If still not provisioned (key all zeros) and on USB, stay in provisioning until PROV or unplug.
+  while (key_is_all_zeros() && prov_is_vbus_present()) {
+    prov_run_serial_loop();
+    load_provisioning();
+  }
 
+  Serial.println("BOOTED:Uguisu");
   Bluefruit.begin();
   Bluefruit.setName("Uguisu");
   Bluefruit.setTxPower(0);
