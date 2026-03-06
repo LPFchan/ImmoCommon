@@ -1,6 +1,6 @@
 # ImmoCommon — Ninebot G30 BLE Immobilizer Shared Library
 
-ImmoCommon is the **shared library** module of a three-part immobilizer system (Uguisu fob + Guillemot receiver + Whimbrel web app) for the Ninebot Max G30. It provides the core cryptography, storage, and provisioning logic used by both the fob and the receiver.
+ImmoCommon is the **shared library** module of a three-part immobilizer system ([Uguisu](https://github.com/LPFchan/Uguisu) fob + [Guillemot](https://github.com/LPFchan/Guillemot) receiver + [Whimbrel](https://github.com/LPFchan/Whimbrel) web app) for the Ninebot Max G30. It provides the core cryptography, storage, and provisioning logic used by both the fob and the receiver.
 
 This repository contains the **ImmoCommon C++ library**.
 
