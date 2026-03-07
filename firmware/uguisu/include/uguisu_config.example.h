@@ -11,9 +11,9 @@ static constexpr uint16_t MSD_COMPANY_ID = 0xFFFF;
 #define UGUISU_PIN_BUTTON_NRF 2
 
 // RGB LED (LED1, XL-5050RGBC): B=D1, R=D2, G=D3. Active-low (sink to turn on).
-#define PIN_LED_G D3
-#define PIN_LED_R D2
 #define PIN_LED_B D1
+#define PIN_LED_R D2
+#define PIN_LED_G D3
 
 // How long to advertise after a press (ms).
 #define UGUISU_ADVERTISE_MS 2000

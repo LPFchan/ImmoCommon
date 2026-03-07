@@ -9,16 +9,15 @@ Uguisu is the BLE key fob in a three-part immobilizer system ([Guillemot](https:
 ### Components & BOM (~$10)
 
 
-| Ref  | Part                    | Notes                           | Source       | Cost  |
-| ---- | ----------------------- | ------------------------------- | ------------ | ----- |
-| U1   | XIAO nRF52840           | Castellated, 21×17.5 mm         | Seeed/Amazon | $6.00 |
-| BAT  | TW-502535               | 3.7V 400mAh LiPo                | Generic      | $2.00 |
-| SW1  | ALPS SKQGABE010         | PCB-mounted, SMD tact           | C115351      | $0.10 |
-| LED1 | XL-5050RGBC             | 5050 SMD RGB                   | C2843868     | $0.15 |
-| R1   | 120 Ω                   | Blue (D1), 0603 SMD             | JLCPCB Basic | —     |
-| R2   | 330 Ω                   | Red (D2), 0603 SMD              | JLCPCB Basic | —     |
-| R3   | 120 Ω                   | Green (D3), 0603 SMD           | JLCPCB Basic | —     |
-| —    | Enclosure               | ~50×35×12 mm, 3D-printed        | Homemade     | —     |
+| Ref    | Part          | Notes                                 | Source / LCSC | Cost  |
+| ------ | ------------- | ------------------------------------- | ------------- | ----- |
+| U1     | XIAO nRF52840 | Castellated, 21×17.5 mm               | Seeed/Amazon  | $6.00 |
+| BAT    | TW-502535     | 3.7V 400mAh LiPo                      | Generic       | $2.00 |
+| KEY1   | SKQGABE010    | Tactile Switch SMD-4P 5.2x5.2mm       | C115351       | $0.11 |
+| LED1   | XL-5050RGBC   | SMD5050-6P RGB LED Common Anode       | C2843868      | $0.05 |
+| R1, R3 | 120 Ω         | 0603WAF1200T5E, 100mW 1% (Blue/Green) | C22787        | <$0.01|
+| R2     | 330 Ω         | 0603WAF3300T5E, 100mW 1% (Red)        | C23138        | <$0.01|
+| —      | Enclosure     | ~50×35×12 mm, 3D-printed              | Homemade      | —     |
 
 
 Hand-solder XIAO and LiPo.
@@ -30,12 +29,12 @@ KiCad (`Uguisu.kicad_sch` / `Uguisu.kicad_pcb`).
 ### GPIO
 
 
-| Function     | Pin | nRF P0.x | Notes                                              |
-| ------------ | --- | -------- | -------------------------------------------------- |
-| Button (SW1) | D0  | P0.02    | Active-low, internal pull-up, wake-from-system-off |
-| Blue (LED1)  | D1  | P0.03    | LED1 pin 1, R1 120 Ω, active-low (sink)            |
-| Red (LED1)   | D2  | P0.28    | LED1 pin 2, R2 330 Ω, active-low (sink)            |
-| Green (LED1) | D3  | P0.29    | LED1 pin 3, R3 120 Ω, active-low (sink)            |
+| Function      | Pin | nRF P0.x | Notes                                              |
+| ------------- | --- | -------- | -------------------------------------------------- |
+| Button (KEY1) | D0  | P0.02    | Active-low, internal pull-up, wake-from-system-off |
+| Blue (LED1)   | D1  | P0.03    | LED1 pin 1, R1 120 Ω, active-low (sink)            |
+| Red (LED1)    | D2  | P0.28    | LED1 pin 2, R2 330 Ω, active-low (sink)            |
+| Green (LED1)  | D3  | P0.29    | LED1 pin 3, R3 120 Ω, active-low (sink)            |
 
 
 ### Operation
