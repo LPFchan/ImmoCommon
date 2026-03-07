@@ -16,12 +16,12 @@ ImmoCommon handles:
 
 ## BLE Protocol
 
-Canonical spec for the encrypted fob → receiver advert format and crypto. Advertisement-based—no persistent connection. The fob (Uguisu) and receiver (Guillemot) must use the same company ID, PSK, and payload layout.
+This section defines the encrypted BLE advertisement format and cryptography used between Uguisu and Guillemot. The protocol is advertisement-based with no persistent connection. Both devices share the same company ID, pre-shared key (PSK), and payload layout.
 
 ### Overview
 
-- **Uguisu (Fob):** System OFF → button press → GPIO wake → broadcast encrypted advert ~2 s → System OFF.
-- **Guillemot (Receiver):** Duty-cycled scan, 20 ms / 2 s (1% duty, ~70 μA avg @ 3.3 V).
+- **Uguisu:** System OFF → button press → GPIO wake → broadcast encrypted advert ~2 s → System OFF.
+- **Guillemot:** Duty-cycled scan, 20 ms / 2 s (1% duty, ~70 μA avg @ 3.3 V).
 - **Key:** 128-bit pre-shared (injected via [Whimbrel](https://github.com/LPFchan/Whimbrel)). Guillemot accepts counter > last seen.
 
 ### Company ID
@@ -32,18 +32,20 @@ Canonical spec for the encrypted fob → receiver advert format and crypto. Adve
 
 ### Pre-shared key (PSK)
 
-- **128-bit (16 bytes)** AES key. Must be **identical** on the fob and Guillemot.
+- **128-bit (16 bytes)** AES key. Must be **identical** on Uguisu and Guillemot.
 - **Provisioning:** Use [Whimbrel](https://github.com/LPFchan/Whimbrel) over Web Serial to write the same key to both devices. Never commit real keys.
 
 ### Advertising payload (9 bytes)
 
 After the 2-byte company ID, the MSD payload is 9 bytes:
 
+
 | Offset | Size | Field   | Endianness | Purpose                    |
-|--------|------|---------|------------|----------------------------|
-| 0      | 4    | counter | little      | Anti-replay, monotonic     |
-| 4      | 1    | command | —           | 0x01 = Unlock, 0x02 = Lock |
-| 5      | 4    | mic     | —           | AES-128-CCM auth tag       |
+| ------ | ---- | ------- | ---------- | -------------------------- |
+| 0      | 4    | counter | little     | Anti-replay, monotonic     |
+| 4      | 1    | command | —          | 0x01 = Unlock, 0x02 = Lock |
+| 5      | 4    | mic     | —          | AES-128-CCM auth tag       |
+
 
 Full MSD = `company_id_le(2) || counter_le(4) || command(1) || mic(4)` → 11 bytes total.
 
@@ -101,3 +103,4 @@ immo::ensure_provisioned(30000, on_success_callback, reload_callback, check_key_
 - This is a prototype security/power-interrupt device. Use at your own risk.
 - Not affiliated with Segway-Ninebot.
 - **Do not test “lock” behavior while riding.**
+
