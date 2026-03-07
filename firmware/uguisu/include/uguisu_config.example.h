@@ -5,11 +5,15 @@
 static constexpr uint16_t MSD_COMPANY_ID = 0xFFFF;
 
 // Button pin used to trigger a one-shot advertisement burst.
-// Pick a real GPIO used in your Uguisu hardware.
-#define UGUISU_PIN_BUTTON D1
+#define UGUISU_PIN_BUTTON D0
 
-// nRF52840 P0.x for wake-from-system-off (must match UGUISU_PIN_BUTTON; e.g. XIAO D1 = P0.03).
-#define UGUISU_PIN_BUTTON_NRF 3
+// nRF52840 P0.x for wake-from-system-off (must match UGUISU_PIN_BUTTON; XIAO D0 = P0.02).
+#define UGUISU_PIN_BUTTON_NRF 2
+
+// RGB LED (LED1, TC5050 common-anode): B=D1, R=D2, G=D3. Active-low (sink to turn on).
+#define PIN_LED_B D1
+#define PIN_LED_R D2
+#define PIN_LED_G D3
 
 // How long to advertise after a press (ms).
 #define UGUISU_ADVERTISE_MS 2000

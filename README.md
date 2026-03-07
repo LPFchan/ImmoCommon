@@ -8,14 +8,20 @@ Uguisu is the BLE key fob in a three-part immobilizer system ([Guillemot](https:
 
 ### Components & BOM (~$10)
 
-| Ref   | Part               | Notes                         | Source       | Cost   |
-| ----- | ------------------ | ----------------------------- | ------------ | ------ |
-| U1    | XIAO nRF52840      | Castellated, 21×17.5 mm       | Seeed/Amazon | $6.00  |
-| BAT   | 100 mAh 3.7 V LiPo | Solder pads on XIAO bottom    | Generic      | $2.00  |
-| SW1   | Tact switch        | Side-actuated, SMD            | Generic      | $0.10  |
-| —     | Enclosure          | ~35×25×12 mm, 3D-printed      | Local        | ~$1.00 |
 
-Hand-solder XIAO, LiPo, and tact switch.
+| Ref  | Part                    | Notes                           | Source       | Cost   |
+| ---- | ----------------------- | ------------------------------- | ------------ | ------ |
+| U1   | XIAO nRF52840           | Castellated, 21×17.5 mm         | Seeed/Amazon | $6.00  |
+| BAT  | 100 mAh 3.7 V LiPo      | Solder pads on XIAO bottom      | Generic      | $2.00  |
+| SW1  | ALPS SKQGABE010         | PCB-mounted, SMD tact           | C115351      | $0.10  |
+| LED1 | TC5050RGBF08-3CJH-AF53A | RGB LED, 5050 SMD, common-anode | C784540      | $0.15  |
+| R1   | 120 Ω                   | LED B (D1), 0603 SMD            | JLCPCB Basic | —      |
+| R2   | 330 Ω                   | LED R (D2), 0603 SMD            | JLCPCB Basic | —      |
+| R3   | 150 Ω                   | LED G (D3), 0603 SMD            | JLCPCB Basic | —      |
+| —    | Enclosure               | ~35×25×12 mm, 3D-printed        | Local        | ~$1.00 |
+
+
+Hand-solder XIAO and LiPo.
 
 ### PCB Design
 
@@ -23,12 +29,14 @@ KiCad (`Uguisu.kicad_sch` / `Uguisu.kicad_pcb`).
 
 ### Operation
 
-- **Unlock flow:** Button press → GPIO wake → boot → init BLE → read/increment NVS → AES-128-CCM → broadcast ~2 s → sleep QSPI (0xB9) → `sd_power_system_off()`.
+- **Unlock flow:** Button press → GPIO wake → boot → init BLE → read/increment NVS → AES-128-CCM → broadcast ~2 s →`sd_power_system_off()`.
 - **Lock flow:** 1-second long press → same sequence, command 0x02.
 - **Power:** < 5 μA standby, ~0.004 mAh per press (12–18 months between charges on 100 mAh LiPo). Charging via USB-C.
 
 ### Design Notes
 
+- **Button:** D0 (P0.02), active-low with internal pull-up. Used for wake-from-system-off.
+- **RGB LED (LED1):** TC5050 common-anode. B=D1/120 Ω, R=D2/330 Ω, G=D3/150 Ω. Active-low.
 - **NVS wear:** Counter written every press (System OFF kills RAM). At 10 unlocks/day, ~2.7 years; wear-leveling extends this.
 
 ---
@@ -63,3 +71,4 @@ Use [Whimbrel](https://github.com/LPFchan/Whimbrel) for both tasks:
 - Do not test lock behavior while riding.
 - Not affiliated with Segway-Ninebot.
 - Avoid committing KiCad per-user state (`*.kicad_prl`) or lock files.
+
