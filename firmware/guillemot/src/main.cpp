@@ -143,6 +143,7 @@ void handle_valid_command(const immo::Payload& pl) {
       g_store.update(pl.counter);
       break;
     default:
+      // Ignore unknown commands
       break;
   }
 }
