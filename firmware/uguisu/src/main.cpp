@@ -26,7 +26,6 @@ static constexpr uint32_t PROV_MAGIC = 0x76704755u;  // "UGpv" LE
 
 // Runtime key: from Whimbrel provisioned flash or compile-time default.
 uint8_t g_psk[16];
-bool g_has_provisioning = false;
 
 immo::CounterStore g_store(COUNTER_LOG_PATH, OLD_COUNTER_LOG_PATH, COUNTER_LOG_MAX_BYTES);
 
@@ -59,7 +58,6 @@ bool on_provision_success(const uint8_t key[16], uint32_t counter) {
 
   g_store.seed(counter);
   memcpy(g_psk, key, 16);
-  g_has_provisioning = true;
   return true;
 }
 
@@ -74,22 +72,18 @@ static void load_provisioning() {
   Adafruit_LittleFS_Namespace::File f(InternalFS.open(PROV_STORAGE_PATH, FILE_O_READ));
   if (!f || f.size() < 20) {
     memcpy(g_psk, k_default_psk, 16);
-    g_has_provisioning = false;
     return;
   }
   uint32_t magic = 0;
   f.read(reinterpret_cast<uint8_t*>(&magic), 4);
   if (magic != PROV_MAGIC) {
     memcpy(g_psk, k_default_psk, 16);
-    g_has_provisioning = false;
     return;
   }
   if (f.read(g_psk, 16) != 16) {
     memcpy(g_psk, k_default_psk, 16);
-    g_has_provisioning = false;
     return;
   }
-  g_has_provisioning = true;
 }
 
 void start_advertising_once(uint16_t company_id, const uint8_t payload9[immo::PAYLOAD_LEN]) {
@@ -137,6 +131,19 @@ static uint32_t wait_for_button_press_release(uint32_t timeout_ms) {
   return millis() - press_start;
 }
 
+[[noreturn]] void led_error_loop() {
+  if (PIN_ERROR_LED >= 0) {
+    pinMode(PIN_ERROR_LED, OUTPUT);
+    while (true) {
+      digitalWrite(PIN_ERROR_LED, HIGH);
+      delay(200);
+      digitalWrite(PIN_ERROR_LED, LOW);
+      delay(200);
+    }
+  }
+  while (true) delay(1000);
+}
+
 }  // namespace
 
 void setup() {
@@ -145,7 +152,10 @@ void setup() {
 
   pinMode(UGUISU_PIN_BUTTON, INPUT_PULLUP);
 
-  if (!g_store.begin()) system_off();
+  if (!g_store.begin()) {
+    Serial.println("InternalFS begin failed");
+    led_error_loop();
+  }
 
   load_provisioning();
   immo::ensure_provisioned(PROV_TIMEOUT_MS, on_provision_success, load_provisioning, key_is_all_zeros);
@@ -156,7 +166,7 @@ void setup() {
   Bluefruit.setTxPower(0);
 
   // Wait for button: single press = Unlock, long press (>= 1s) = Lock
-  const uint32_t press_ms = wait_for_button_press_release(10000);
+  const uint32_t press_ms = wait_for_button_press_release(UGUISU_BUTTON_TIMEOUT_MS);
   if (press_ms == 0) system_off();  // No press within timeout, sleep
   const immo::Command command =
       (press_ms >= UGUISU_LONG_PRESS_MS) ? immo::Command::Lock : immo::Command::Unlock;
