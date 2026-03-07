@@ -116,7 +116,7 @@ bool prov_run_serial_loop(uint32_t timeout_ms, bool (*on_success)(const uint8_t[
         Serial.println("ACK:PROV_SUCCESS");
         return true;
       }
-      Serial.println("ERR:STORAGE");
+      if (on_success) Serial.println("ERR:STORAGE");
       return false;
     }
     line[len++] = (char)c;
