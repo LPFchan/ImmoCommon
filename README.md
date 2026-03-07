@@ -14,6 +14,64 @@ ImmoCommon handles:
 - **Provisioning (`immo_provisioning`)**: VBUS detection, USB serial reading, hex parsing, CRC-16-CCITT checksum validation, and the standard `PROV:` serial loop used by the Whimbrel web app.
 - **Storage (`immo_storage`)**: `CounterStore` implementation using `Adafruit_LittleFS`. Handles atomic writes, CRC-32 integrity checks, and log rotation for the anti-replay counter. At 10 unlocks/day, standard NVS ~2.7 years; wear-leveling extends this.
 
+## BLE Protocol
+
+Canonical spec for the encrypted fob → receiver advert format and crypto. Advertisement-based—no persistent connection. The fob (Uguisu) and receiver (Guillemot) must use the same company ID, PSK, and payload layout.
+
+### Overview
+
+- **Uguisu (Fob):** System OFF → button press → GPIO wake → broadcast encrypted advert ~2 s → System OFF.
+- **Guillemot (Receiver):** Duty-cycled scan, 20 ms / 2 s (1% duty, ~70 μA avg @ 3.3 V).
+- **Key:** 128-bit pre-shared (injected via [Whimbrel](https://github.com/LPFchan/Whimbrel)). Guillemot accepts counter > last seen.
+
+### Company ID
+
+- **You choose:** any 16-bit value (e.g. `0xFFFF` for internal/prototype, or a Bluetooth SIG–assigned ID).
+- Set `MSD_COMPANY_ID` in both firmwares: Guillemot [guillemot_config.example.h](https://github.com/LPFchan/Guillemot/blob/HEAD/firmware/guillemot/include/guillemot_config.example.h), Uguisu [uguisu_config.example.h](https://github.com/LPFchan/Uguisu/blob/HEAD/firmware/uguisu/include/uguisu_config.example.h) (or your local config). Both must use the same value.
+- In adverts the value is sent little-endian (e.g. `0xFFFF` → `0xFF, 0xFF`).
+
+### Pre-shared key (PSK)
+
+- **128-bit (16 bytes)** AES key. Must be **identical** on the fob and Guillemot.
+- **Provisioning:** Use [Whimbrel](https://github.com/LPFchan/Whimbrel) over Web Serial to write the same key to both devices. Never commit real keys.
+
+### Advertising payload (9 bytes)
+
+After the 2-byte company ID, the MSD payload is 9 bytes:
+
+| Offset | Size | Field   | Endianness | Purpose                    |
+|--------|------|---------|------------|----------------------------|
+| 0      | 4    | counter | little      | Anti-replay, monotonic     |
+| 4      | 1    | command | —           | 0x01 = Unlock, 0x02 = Lock |
+| 5      | 4    | mic     | —           | AES-128-CCM auth tag       |
+
+Full MSD = `company_id_le(2) || counter_le(4) || command(1) || mic(4)` → 11 bytes total.
+
+### AES-128-CCM MIC (4-byte tag)
+
+- **Nonce (13 bytes):** `counter_le(4) || 0x00×9`.
+- **Message (5 bytes):** `counter_le(4) || command(1)`.
+- **Tag length:** 4 bytes (M=4, L=2 in CCM flags).
+- MIC is computed over the 5-byte message with the 13-byte nonce and the 16-byte PSK; result is the 4-byte tag appended in the payload.
+
+Receiver verifies: recomputes MIC over (counter, command) and compares to received MIC in constant time. Fob computes the same MIC when building the advert.
+
+### Test vectors
+
+From ImmoCommon root:
+
+```bash
+python3 tools/test_vectors/gen_mic.py --company-id <YOUR_ID> --counter 0 --command 1 --key <32 hex chars>
+```
+
+From Uguisu or Guillemot (ImmoCommon as submodule in `lib/ImmoCommon`):
+
+```bash
+python3 lib/ImmoCommon/tools/test_vectors/gen_mic.py --company-id <YOUR_ID> --counter 0 --command 1 --key <32 hex chars>
+```
+
+Output includes `msd_company_plus_payload` (11 bytes) you can inject or compare against firmware.
+
 ## Usage
 
 ImmoCommon is included as a **Git Submodule** in both the `Uguisu` and `Guillemot` repositories.
