@@ -83,7 +83,7 @@ bool prov_run_serial_loop(uint32_t timeout_ms, bool (*on_success)(const uint8_t[
       const char* counter_hex = col1 + 1;
       const char* checksum_hex = col2 + 1;
       
-      if ((size_t)(col1 - key_hex) != 32 || (size_t)(col2 - counter_hex) != 8 || strlen(checksum_hex) < 4) {
+      if ((size_t)(col1 - key_hex) != 32 || (size_t)(col2 - counter_hex) != 8 || strlen(checksum_hex) != 4) {
         Serial.println("ERR:MALFORMED");
         return false;
       }
