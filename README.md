@@ -10,34 +10,34 @@ Guillemot is the deck receiver in a three-part immobilizer system ([Uguisu](http
 
 Mount Guillemot on the plastic underside of the deck for good 2.4 GHz RF.
 
-### Components & BOM (~$20–25)
+### Components & BOM (~$20)
 
 
-| Ref       | Part            | Notes                                                             | JLCPCB #         | Cost  |
-| --------- | --------------- | ----------------------------------------------------------------- | ---------------- | ----- |
-| U1        | XIAO nRF52840   | MCU: BLE scanning, latch control, buzzer PWM                      | Seeed/Amazon     | $6.00 |
-| U2        | SN74LVC2G02DCTR | SR latch: Q = unlock. 10 nF + 100 kΩ differentiator for POR pulse | C94600 (ext.)    | $0.53 |
-| PS1       | TPSM365R6V3RDNR | Buck: 3–65 V in, 3.3 V/600 mA, 4 μA Iq. Feeds XIAO 3V3 directly.  | C18208843 (ext.) | $3.59 |
-| Q1        | IPB042N10N3G    | Main MOSFET: 100 V/137 A, D2PAK, low-side GND return              | C69300 (ext.)    | $0.75 |
-| Q2        | AO3422          | Pre-charge FET, inrush ~0.8 A. Driven by latch Q.                 | C37130 (ext.)    | $0.23 |
-| Q3        | SI2309CDS       | Bleeder P-FET: disconnects 10 kΩ bleeder when locked (0 μA)       | C10493 (ext.)    | $0.23 |
-| Q4        | 2N7002          | Gate drive                                                        | C8545            | $0.01 |
-| Q5, Q6    | MMBT3904        | Buzzer driver                                                     | C20526           | $0.02 |
-| BZ1       | FUET-1230       | Buzzer: 12×12×3 mm SMD, 4 kHz. Driven by MMBT3904                 | C391037 (ext.)   | $0.47 |
-| D1        | BZT52C12-7-F    | 12 V Zener                                                        | C124196 (ext.)   | $0.11 |
-| D2        | BZT52C10-7-F    | 10 V Zener                                                        | C155227 (ext.)   | $0.10 |
-| D3, D4    | 1N4148W         | Gate isolation from buzzer rail sag                               | C81598           | $0.01 |
-| D5        | SMBJ45A         | 45 V TVS diode for transient suppression                          | C114005 (ext.)   | $0.08 |
+| Ref       | Part            | Notes                                                             | JLCPCB #         | Cost   |
+| --------- | --------------- | ----------------------------------------------------------------- | ---------------- | ------ |
+| U1        | XIAO nRF52840   | MCU: BLE scanning, latch control, buzzer PWM                      | Seeed            | $8.23  |
+| U2        | SN74LVC2G02DCTR | SR latch: Q = unlock. 10 nF + 100 kΩ differentiator for POR pulse | C94600 (ext.)    | $0.53  |
+| PS1       | TPSM365R6V3RDNR | Buck: 3–65 V in, 3.3 V/600 mA, 4 μA Iq. Feeds XIAO 3V3 directly.  | C18208843 (ext.) | $3.59  |
+| Q1        | IPB042N10N3G    | Main MOSFET: 100 V/137 A, D2PAK, low-side GND return              | C69300 (ext.)    | $0.75  |
+| Q2        | AO3422          | Pre-charge FET, inrush ~0.8 A. Driven by latch Q.                 | C37130 (ext.)    | $0.23  |
+| Q3        | SI2309CDS       | Bleeder P-FET: disconnects 10 kΩ bleeder when locked (0 μA)       | C10493 (ext.)    | $0.23  |
+| Q4        | 2N7002          | Gate drive                                                        | C8545            | $0.01  |
+| Q5, Q6    | MMBT3904        | Buzzer driver                                                     | C20526           | $0.02  |
+| BZ1       | FUET-1230       | Buzzer: 12×12×3 mm SMD, 4 kHz. Driven by MMBT3904                 | C391037 (ext.)   | $0.47  |
+| D1        | BZT52C12-7-F    | 12 V Zener                                                        | C124196 (ext.)   | $0.11  |
+| D2        | BZT52C10-7-F    | 10 V Zener                                                        | C155227 (ext.)   | $0.10  |
+| D3, D4    | 1N4148W         | Gate isolation from buzzer rail sag                               | C81598           | $0.01  |
+| D5        | SMBJ45A         | 45 V TVS diode for transient suppression                          | C114005 (ext.)   | $0.08  |
 | C1        | 10 nF (0603)    | POR pulse differentiator                                          | C57112           | $0.003 |
-| C2        | 100 µF (1210)   | Bulk decoupling                                                   | C23742 (ext.)    | $0.31 |
-| C3, C4    | 1 µF (0603)     | RC delay bypass, gate isolation                                   | C15849           | $0.01 |
+| C2        | 100 µF (1210)   | Bulk decoupling                                                   | C23742 (ext.)    | $0.31  |
+| C3, C4    | 1 µF (0603)     | RC delay bypass, gate isolation                                   | C15849           | $0.01  |
 | R1–R3, R7 | 100 kΩ (0603)   | Gate drive, pull-ups, RC delay (τ = 100 ms)                       | C25803           | $0.006 |
 | R4        | 1 MΩ (0603)     | P-FET gate pull-up                                                | C22935           | $0.001 |
 | R5        | 10 kΩ (0603)    | Bleeder resistor                                                  | C25804           | $0.001 |
 | R6        | 4.7 kΩ (0603)   | Piezo buzzer discharge resistor                                   | C23162           | $0.001 |
-| R8        | 47 Ω 2 W (2512) | Pre-charge resistor                                               | C136992 (ext.)   | $0.10 |
-| TP1–5     | XT60 + 12 AWG   | Pigtails and GND jumper                                           | Generic          | —     |
-| —         | PCB             | 54×34 mm, 2 oz outer                                              | JLCPCB           | $1.60 |
+| R8        | 47 Ω 2 W (2512) | Pre-charge resistor                                               | C136992 (ext.)   | $0.10  |
+| TP1–5     | XT60 + 12 AWG   | Pigtails and GND jumper                                           | Generic          | —      |
+| —         | PCB             | 54×34 mm, 2 oz outer                                              | JLCPCB           | $1.60  |
 
 
 JLCPCB P&P for SMT. Hand-solder XIAO edges, XT60 pigtails, and the GND jumper.

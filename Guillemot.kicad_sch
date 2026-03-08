@@ -1307,393 +1307,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "TPSM365R6V3RDNR:TPSM365R6V3RDNR"
-			(pin_names
-				(offset 1.016)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "PS"
-				(at -15.24 16.002 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left bottom)
-				)
-			)
-			(property "Value" "TPSM365R6V3RDNR"
-				(at -15.24 -17.78 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left bottom)
-				)
-			)
-			(property "Footprint" "TPSM365R6V3RDNR:CONV_TPSM365R6V3RDNR"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "MF" "Texas Instruments"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "MAXIMUM_PACKAGE_HEIGHT" "2.10 mm"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "Package" "None"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "Price" "None"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "Check_prices" "https://www.snapeda.com/parts/TPSM365R6V3RDNR/Texas+Instruments/view-part/?ref=eda"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "STANDARD" "Manufacturer Recommendations"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "PARTREV" "B"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "SnapEDA_Link" "https://www.snapeda.com/parts/TPSM365R6V3RDNR/Texas+Instruments/view-part/?ref=snap"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "MP" "TPSM365R6V3RDNR"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "Description_1" "3-V to 65-V input, 1-V to 13-V output, 0.6-A synchronous buck converter power module"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "Availability" "In Stock"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(property "MANUFACTURER" "Texas Instruments"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify bottom)
-					(hide yes)
-				)
-			)
-			(symbol "TPSM365R6V3RDNR_0_0"
-				(rectangle
-					(start -15.24 -15.24)
-					(end 15.24 15.24)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type background)
-					)
-				)
-				(pin input line
-					(at -20.32 5.08 0)
-					(length 5.08)
-					(name "EN"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at -20.32 0 0)
-					(length 5.08)
-					(name "BIAS"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "9"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at -20.32 -5.08 0)
-					(length 5.08)
-					(name "MODE/SYNC"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "11"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 20.32 12.7 180)
-					(length 5.08)
-					(name "VIN"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 20.32 10.16 180)
-					(length 5.08)
-					(name "VCC"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "8"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin output line
-					(at 20.32 5.08 180)
-					(length 5.08)
-					(name "VOUT"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "4"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin output line
-					(at 20.32 0 180)
-					(length 5.08)
-					(name "PGOOD"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 20.32 -5.08 180)
-					(length 5.08)
-					(name "SW"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "5"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 20.32 -5.08 180)
-					(length 5.08)
-					(hide yes)
-					(name "SW"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "6"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 20.32 -7.62 180)
-					(length 5.08)
-					(name "BOOT"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "7"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 20.32 -12.7 180)
-					(length 5.08)
-					(name "GND"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "10"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 		(symbol "Transistor_BJT:MMBT3904"
 			(pin_names
 				(offset 0)
@@ -3483,6 +3096,286 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "easyeda2kicad:TPSM365R6V3RDNR"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 17.78 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TPSM365R6V3RDNR"
+				(at 0 -15.24 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "easyeda2kicad:QFN-11_L4.5-W3.5-P0.50-TL_TPSM365R6FRDNR"
+				(at 0 -17.78 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "LCSC Part" "C18208843"
+				(at 0 -20.32 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "TPSM365R6V3RDNR_0_1"
+				(rectangle
+					(start -15.24 15.24)
+					(end 15.24 -12.7)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(circle
+					(center -13.97 13.97)
+					(radius 0.38)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin unspecified line
+					(at -17.78 12.7 0)
+					(length 2.54)
+					(name "SW"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -17.78 10.16 0)
+					(length 2.54)
+					(name "SW"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -17.78 6.35 0)
+					(length 2.54)
+					(name "VOUT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -17.78 2.54 0)
+					(length 2.54)
+					(name "BOOT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -17.78 -2.54 0)
+					(length 2.54)
+					(name "FB/BIAS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -17.78 -7.62 0)
+					(length 2.54)
+					(name "PGOOD"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 17.78 12.7 180)
+					(length 2.54)
+					(name "VCC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 17.78 5.08 180)
+					(length 2.54)
+					(name "VIN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 17.78 1.27 180)
+					(length 2.54)
+					(name "EN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 17.78 -5.08 180)
+					(length 2.54)
+					(name "MODE/SYNC/RT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "11"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 17.78 -10.16 180)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "10"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:+BATT"
 			(power)
 			(pin_numbers
@@ -3711,10 +3604,10 @@
 		)
 	)
 	(junction
-		(at 55.88 26.67)
+		(at 53.34 34.29)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "e3a85ace-efe1-467e-bc51-4f4f74ee33b4")
+		(uuid "6f60a4f6-cb08-4a34-a42b-982dc45925da")
 	)
 	(no_connect
 		(at 43.18 120.65)
@@ -3729,11 +3622,11 @@
 		(uuid "0b869fe3-0454-41d2-9a68-643745db545f")
 	)
 	(no_connect
-		(at 15.24 44.45)
+		(at 17.78 46.99)
 		(uuid "0bb85120-5d9b-49d1-8a45-fc5552ec04d4")
 	)
 	(no_connect
-		(at 55.88 29.21)
+		(at 53.34 26.67)
 		(uuid "1af2008c-b073-4a90-b624-1d22b3d7cf24")
 	)
 	(no_connect
@@ -3745,7 +3638,7 @@
 		(uuid "3ec37f94-dd37-47f7-976f-fbbfc78fd082")
 	)
 	(no_connect
-		(at 15.24 39.37)
+		(at 17.78 41.91)
 		(uuid "480310ad-6cc8-48d8-80c2-db0c82523c51")
 	)
 	(no_connect
@@ -3773,11 +3666,15 @@
 		(uuid "a281282a-1577-4720-90bf-ffaa246b8df2")
 	)
 	(no_connect
-		(at 55.88 44.45)
+		(at 17.78 29.21)
+		(uuid "a405c93f-cda7-40cb-a45f-267a0f3d2d36")
+	)
+	(no_connect
+		(at 53.34 44.45)
 		(uuid "c4ca6cad-6b83-4d84-b631-717356e7ac9c")
 	)
 	(no_connect
-		(at 55.88 39.37)
+		(at 17.78 36.83)
 		(uuid "ca0dea4c-1aed-4925-8fc8-aa64641534b6")
 	)
 	(no_connect
@@ -3789,7 +3686,7 @@
 		(uuid "e23f3365-0fd6-4587-83ee-1497a7961d85")
 	)
 	(no_connect
-		(at 55.88 46.99)
+		(at 17.78 26.67)
 		(uuid "f11a021f-8a6e-4264-8450-50af26f78866")
 	)
 	(no_connect
@@ -3802,16 +3699,6 @@
 	)
 	(wire
 		(pts
-			(xy 55.88 21.59) (xy 55.88 26.67)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0e5ebe18-9d51-4770-829c-ab6a65195bc5")
-	)
-	(wire
-		(pts
 			(xy 20.32 101.6) (xy 22.86 101.6)
 		)
 		(stroke
@@ -3819,16 +3706,6 @@
 			(type default)
 		)
 		(uuid "22ca5cf9-2fb3-40dc-a7f7-fda96a8a7705")
-	)
-	(wire
-		(pts
-			(xy 15.24 34.29) (xy 15.24 21.59)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "288b9358-6f1e-424c-be66-9f9fe5c9d276")
 	)
 	(wire
 		(pts
@@ -3862,6 +3739,16 @@
 	)
 	(wire
 		(pts
+			(xy 53.34 34.29) (xy 53.34 38.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9e1eaeb7-949f-4b15-8d4f-bc2ecb8d9560")
+	)
+	(wire
+		(pts
 			(xy 64.77 109.22) (xy 67.31 109.22)
 		)
 		(stroke
@@ -3879,16 +3766,6 @@
 			(type default)
 		)
 		(uuid "baddd65d-6f36-48f8-92b2-21114ac5446c")
-	)
-	(wire
-		(pts
-			(xy 15.24 21.59) (xy 55.88 21.59)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e1751cb1-b950-4e1c-93bb-9e89c68456a3")
 	)
 	(label "3.3V"
 		(at 134.62 137.16 270)
@@ -4161,12 +4038,12 @@
 		(uuid "77ed1cc1-18e7-47c5-bc25-7283f10e6016")
 	)
 	(label "3.3V"
-		(at 55.88 34.29 0)
+		(at 17.78 33.02 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left bottom)
+			(justify right bottom)
 		)
 		(uuid "82040fe4-26e7-4e4d-8397-29b023586d45")
 	)
@@ -4848,7 +4725,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_3.0x3.0mm"
+		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
 			(at 129.54 137.16 0)
 			(effects
 				(font
@@ -4915,7 +4792,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
+		(property "Footprint" "TestPoint:TestPoint_Pad_6.0x6.0mm"
 			(at 119.38 137.16 0)
 			(effects
 				(font
@@ -5421,7 +5298,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
+		(property "Footprint" "TestPoint:TestPoint_Pad_6.0x6.0mm"
 			(at 109.22 137.16 0)
 			(effects
 				(font
@@ -5612,7 +5489,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part" "C2099"
+		(property "LCSC Part" "C81598"
 			(at 254 71.12 0)
 			(effects
 				(font
@@ -5971,7 +5848,7 @@
 		)
 	)
 	(symbol
-		(lib_id "TPSM365R6V3RDNR:TPSM365R6V3RDNR")
+		(lib_id "easyeda2kicad:TPSM365R6V3RDNR")
 		(at 35.56 39.37 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -5996,13 +5873,12 @@
 				)
 			)
 		)
-		(property "Footprint" "TPSM365R6V3RDNR:CONV_TPSM365R6V3RDNR"
-			(at 35.56 39.37 0)
+		(property "Footprint" "easyeda2kicad:QFN-11_L4.5-W3.5-P0.50-TL_TPSM365R6FRDNR"
+			(at 35.56 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify bottom)
 				(hide yes)
 			)
 		)
@@ -6145,7 +6021,7 @@
 			)
 		)
 		(property "LCSC Part" "C18208843"
-			(at 35.56 39.37 0)
+			(at 35.56 59.69 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6355,7 +6231,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
+		(property "Footprint" "TestPoint:TestPoint_Pad_6.0x6.0mm"
 			(at 100.33 137.16 0)
 			(effects
 				(font
@@ -6597,7 +6473,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 55.88 52.07 90)
+		(at 53.34 49.53 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6606,7 +6482,7 @@
 		(fields_autoplaced yes)
 		(uuid "6b03495a-c8e6-43b8-8027-b03e226f834d")
 		(property "Reference" "#PWR02"
-			(at 62.23 52.07 0)
+			(at 59.69 49.53 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6615,7 +6491,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 59.69 52.0699 90)
+			(at 57.15 49.5299 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6624,7 +6500,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 55.88 52.07 0)
+			(at 53.34 49.53 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6633,7 +6509,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 55.88 52.07 0)
+			(at 53.34 49.53 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6642,7 +6518,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 55.88 52.07 0)
+			(at 53.34 49.53 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6896,7 +6772,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_2.0x2.0mm"
+		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
 			(at 149.86 137.16 0)
 			(effects
 				(font
@@ -7664,7 +7540,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
+		(property "Footprint" "TestPoint:TestPoint_Pad_6.0x6.0mm"
 			(at 90.17 137.16 0)
 			(effects
 				(font
@@ -8330,7 +8206,7 @@
 	)
 	(symbol
 		(lib_id "power:+BATT")
-		(at 55.88 26.67 270)
+		(at 53.34 34.29 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -8339,7 +8215,7 @@
 		(fields_autoplaced yes)
 		(uuid "c85368d7-6a72-43a0-aea6-c9c5fc6f1a57")
 		(property "Reference" "#PWR01"
-			(at 52.07 26.67 0)
+			(at 49.53 34.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8348,7 +8224,7 @@
 			)
 		)
 		(property "Value" "+BATT"
-			(at 59.69 26.6699 90)
+			(at 57.15 34.2899 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8357,7 +8233,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 55.88 26.67 0)
+			(at 53.34 34.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8366,7 +8242,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 55.88 26.67 0)
+			(at 53.34 34.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8375,7 +8251,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+BATT\""
-			(at 55.88 26.67 0)
+			(at 53.34 34.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8801,7 +8677,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_2.0x2.0mm"
+		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
 			(at 139.7 137.16 0)
 			(effects
 				(font
