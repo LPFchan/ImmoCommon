@@ -188,9 +188,9 @@ void setup() {
   memcpy(&payload13[0], msg, sizeof(msg));
   memcpy(&payload13[sizeof(msg)], mic, sizeof(mic));
 
+  g_store.update(counter);
   start_advertising_once(MSD_COMPANY_ID, payload13);
   delay(UGUISU_ADVERTISE_MS);
-  g_store.update(counter);
   system_off();
 }
 
