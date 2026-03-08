@@ -131,16 +131,16 @@ void handle_valid_command(const immo::Payload& pl) {
   const uint32_t last = g_store.lastCounter();
   if (pl.counter <= last) return;
 
+  g_store.update(pl.counter);
+
   switch (pl.command) {
     case immo::Command::Unlock:
       latch_set_pulse();
       buzzer_tone_ms(BUZZER_UNLOCK_MS);
-      g_store.update(pl.counter);
       break;
     case immo::Command::Lock:
       buzzer_tone_ms(BUZZER_LOCK_MS);
       latch_reset_pulse();
-      g_store.update(pl.counter);
       break;
     default:
       // Ignore unknown commands
@@ -151,6 +151,7 @@ void handle_valid_command(const immo::Payload& pl) {
 void scan_callback(ble_gap_evt_adv_report_t* report) {
   immo::Payload pl{};
   if (!parse_payload_from_report(report, pl)) return;
+  if (key_is_all_zeros()) return;
   if (!verify_payload(pl)) return;
   handle_valid_command(pl);
 }
