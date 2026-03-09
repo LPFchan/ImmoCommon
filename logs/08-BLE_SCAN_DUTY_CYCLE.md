@@ -1,5 +1,7 @@
 # BLE Scan Duty Cycle — Technical Analysis
 
+**Last modified: 2026-03-09 19:53**
+
 ## Current Configuration
 
 | Parameter | Value |

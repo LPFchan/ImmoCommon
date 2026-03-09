@@ -1,5 +1,7 @@
 # BLE Immobilizer System — Complete Technical Writeup
 
+**Last modified: 2026-03-09 06:13**
+
 **Ninebot G30 Immobilizer: Guillemot, Uguisu, ImmoCommon & Whimbrel**
 
 This document provides a human-readable, module-by-module technical reference for every component of the BLE-based immobilizer system.

@@ -1,5 +1,7 @@
 # Whimbrel: Syncing Main → Demo
 
+**Last modified: 2026-03-10 01:53**
+
 Documents how to bring `main` changes into the `demo` branch and re-enable demo flags.
 
 ---

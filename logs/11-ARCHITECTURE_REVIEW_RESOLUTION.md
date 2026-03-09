@@ -1,5 +1,7 @@
 # Architecture Review — Resolution Summary
 
+**Last modified: 2026-03-09 22:49**
+
 This document records how each concern raised in [7-ARCHITECTURE_REVIEW.md](7-ARCHITECTURE_REVIEW.md) was addressed.
 
 ---

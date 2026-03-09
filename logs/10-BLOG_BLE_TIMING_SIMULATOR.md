@@ -1,5 +1,7 @@
 # Simulating BLE Detection Probability for a DIY Scooter Immobilizer
 
+**Last modified: 2026-03-09 22:12**
+
 *A deep dive into why "100% detection" on paper can still miss in the real world, and how a browser-based timing simulator exposed the truth.*
 
 ---
