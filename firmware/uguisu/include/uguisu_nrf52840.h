@@ -1,4 +1,8 @@
 #pragma once
+#include <Arduino.h>
+#include <nrf_gpio.h>
+#include <nrf_soc.h>
+#include <bluefruit.h>
 
 // BLE Manufacturer Specific Data company ID (2 bytes, little-endian).
 // Must match Guillemot. 0xFFFF is a common placeholder for prototypes.
@@ -44,8 +48,27 @@ static constexpr uint16_t MSD_COMPANY_ID = 0xFFFF;
 #endif
 
 inline uint16_t readVbat_mv() {
+#ifdef VBAT_ENABLE
+  pinMode(VBAT_ENABLE, OUTPUT);
+  digitalWrite(VBAT_ENABLE, LOW);  // enable PMOS → connect 1MΩ/1MΩ divider
+#endif
   analogReference(AR_INTERNAL_3_0);
   analogReadResolution(12);
-  return (uint16_t)((uint32_t)analogRead(UGUISU_VBAT_PIN) * 6000u / 4096u);
+  delay(1);  // allow divider to settle
+  const uint16_t mv = (uint16_t)((uint32_t)analogRead(UGUISU_VBAT_PIN) * 6000u / 4096u);
+#ifdef VBAT_ENABLE
+  digitalWrite(VBAT_ENABLE, HIGH);  // disable PMOS → stop divider current draw
+#endif
+  return mv;
 }
 
+// Stop BLE advertising, configure button as wake source, enter nRF52 system-off.
+// Safe to call before advertising has started (stop() is a no-op in that case).
+inline void system_off() {
+  Bluefruit.Advertising.stop();
+  delay(10);
+#ifdef UGUISU_PIN_BUTTON_NRF
+  nrf_gpio_cfg_sense_input(UGUISU_PIN_BUTTON_NRF, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+#endif
+  sd_power_system_off();
+}

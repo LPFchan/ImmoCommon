@@ -4,5 +4,5 @@
 #include "uguisu_config_local.h"
 #endif
 
-#include "uguisu_config.example.h"
+#include "uguisu_nrf52840.h"
 
