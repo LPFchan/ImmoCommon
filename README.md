@@ -1,6 +1,8 @@
-# Immogen — Ninebot G30 BLE Immobilizer Monorepo
+# Immogen — Ninebot G30 BLE Immobilizer
 
-**Immogen** is a three-part BLE immobilizer system for the Ninebot Max G30: [**Uguisu**](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) (key fob), [**Guillemot**](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) (deck receiver), and [**Whimbrel**](https://github.com/LPFchan/Whimbrel) (Web Serial provisioning app). Guillemot controls battery-to-ESC power via an inline XT60 splice; no valid BLE unlock means the scooter stays inoperable. Male/female pigtails make installation reversible—no permanent modification to the vehicle.
+**Immogen** is a three-part BLE immobilizer system for the Ninebot Max G30, consisting of **[Uguisu](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme)** (key fob), **[Guillemot](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme)** (deck receiver), and **[Whimbrel](https://github.com/LPFchan/Whimbrel)** (Web Serial provisioning app).
+
+Guillemot sits inline between the battery and ESC via an XT60 splice. Without a valid BLE unlock from Uguisu, the scooter stays inoperable. Male/female pigtails keep the install reversible—no permanent modification required.
 
 ```
 ┌─────────────────┐       BLE advertisement        ┌──────────────────────┐
@@ -14,38 +16,22 @@
                           └────────────────────┘
 ```
 
-Use [Whimbrel](https://github.com/LPFchan/Whimbrel) for firmware flashing and key provisioning via Web Serial.
-
----
-
 ## Repository Structure
 
-| Path | Description |
-| --- | --- |
-| **`lib/`** | Shared C++ library (crypto, provisioning, storage) used by both firmwares |
-| **`Guillemot/`** | Deck receiver—firmware, KiCad, BOM. See [Guillemot README](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) |
-| **`Uguisu/`** | Key fob—firmware, KiCad, BOM. See [Uguisu README](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) |
-| **`tools/`** | LED visualizer, BLE timing simulator, buzzer tuner (HTML); test vectors (`gen_mic.py`) |
-| **`logs/`** | Migration reports and guides |
 
----
+| Path             | Description                                                                                                                                                                       |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `**Uguisu/**`    | Key fob — firmware, KiCad, BOM. Button press → 2 s BLE broadcast → sleep. [README](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme)                                  |
+| `**Guillemot/**` | Deck receiver — firmware, KiCad, BOM. Duty-cycled scan (5%), validates adverts → SR latch → power gate. [README](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) |
+| `**lib/**`       | Shared C++ library: AES-128-CCM MIC, provisioning loop, LittleFS counter storage                                                                                                  |
+| `**tools/**`     | LED visualizer, BLE timing simulator, buzzer tuner (HTML); MIC test vectors (`gen_mic.py`)                                                                                        |
+| `**logs/**`      | Migration reports and guides                                                                                                                                                      |
 
-## Components
-
-| Component | Role |
-| --- | --- |
-| **Uguisu** | System OFF → button press → BLE broadcast ~2 s → System OFF |
-| **Guillemot** | Duty-cycled scan (25 ms / 500 ms, 5%), validates adverts → SR latch → power gate |
-| **lib/** | AES-128-CCM MIC, provisioning loop, counter storage (LittleFS) |
-| **Whimbrel** | Web app for flashing and provisioning |
-
----
 
 ## BLE Protocol
 
-Advertisement-based; no persistent connection. Both devices share the same company ID and pre-shared key (PSK). For implementation details, see [Guillemot](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) and [Uguisu](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) READMEs.
+Advertisement-only; no persistent connection. Both devices share a company ID and pre-shared key (PSK). Each advertisement carries a 13-byte payload after the 2-byte company ID:
 
-### Payload (13 bytes after 2-byte company ID)
 
 | Offset | Size | Field   | Purpose                    |
 | ------ | ---- | ------- | -------------------------- |
@@ -53,47 +39,37 @@ Advertisement-based; no persistent connection. Both devices share the same compa
 | 4      | 1    | command | 0x01 = Unlock, 0x02 = Lock |
 | 5      | 8    | mic     | AES-128-CCM auth tag       |
 
+
+For full protocol details see the [Guillemot](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) and [Uguisu](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) READMEs.
+
 ### Test vectors
 
 ```bash
 python3 tools/test_vectors/gen_mic.py --company-id 0xFFFF --counter 0 --command 1 --key <32 hex chars>
 ```
 
----
-
 ## Quick Start
 
-Pre-built firmware is available at [Releases](https://github.com/LPFchan/Immogen/releases). Use [Whimbrel](https://github.com/LPFchan/Whimbrel) to flash firmware and provision keys.
+Pre-built firmware is available on the [Releases](https://github.com/LPFchan/Immogen/releases) page. Use [Whimbrel](https://github.com/LPFchan/Whimbrel) to flash and provision keys via Web Serial.
 
 **Build from source:**
 
 ```bash
-# Build receiver (Guillemot)
+# Deck receiver
 cd Guillemot/firmware && pio run
 
-# Build fob (Uguisu)
+# Key fob
 cd Uguisu/firmware && pio run
 ```
 
----
-
-## Further Reading
-
-- **Deck receiver (Guillemot):** [Guillemot README](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) — hardware, PCB layout, BOM, operation
-- **Key fob (Uguisu):** [Uguisu README](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) — hardware, GPIO, LED behaviour, boot flow
-- **Provisioning & flashing:** [Whimbrel](https://github.com/LPFchan/Whimbrel)
-
----
-
-## TBD
+## Roadmap
 
 - Uguisu enclosure CAD (3D print).
 - First-build validation: PPK2 power, BLE range through deck, pre-charge waveform.
-
----
 
 ## Safety & Legal
 
 - Prototype security/power-interrupt device. Use at your own risk.
 - Not affiliated with Segway-Ninebot.
 - **Do not test lock behavior while riding.**
+
