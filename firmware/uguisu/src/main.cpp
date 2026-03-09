@@ -19,10 +19,9 @@ static constexpr uint8_t k_default_psk[16] = {0};
 
 static constexpr const char* COUNTER_LOG_PATH = "/ug_ctr.log";
 static constexpr const char* OLD_COUNTER_LOG_PATH = "/ug_ctr.old";
-static constexpr const char* PROV_STORAGE_PATH = "/ug_prov.bin";
+static constexpr const char* PROV_STORAGE_PATH = "/prov.bin";
 static constexpr size_t COUNTER_LOG_MAX_BYTES = 4096;
 static constexpr uint32_t PROV_TIMEOUT_MS = 30000;
-static constexpr uint32_t PROV_MAGIC = 0x76704755u;  // "UGpv" LE
 
 // Runtime key: from Whimbrel provisioned flash or compile-time default.
 uint8_t g_psk[16];
@@ -31,59 +30,15 @@ immo::CounterStore g_store(COUNTER_LOG_PATH, OLD_COUNTER_LOG_PATH, COUNTER_LOG_M
 
 // Callback for provisioning success
 bool on_provision_success(const uint8_t key[16], uint32_t counter) {
-  InternalFS.remove(PROV_STORAGE_PATH);
-  Adafruit_LittleFS_Namespace::File f(InternalFS.open(PROV_STORAGE_PATH, FILE_O_WRITE));
-  if (!f) return false;
-  
-  f.write(reinterpret_cast<const uint8_t*>(&PROV_MAGIC), 4);
-  f.write(key, 16);
-  f.flush();
-  f.close();
-
-  // Verify
-  Adafruit_LittleFS_Namespace::File fr(InternalFS.open(PROV_STORAGE_PATH, FILE_O_READ));
-  if (!fr || fr.size() < 20) return false;
-  
-  uint32_t read_magic = 0;
-  uint8_t read_key[16];
-  if (fr.read(reinterpret_cast<uint8_t*>(&read_magic), 4) != 4 ||
-      read_magic != PROV_MAGIC ||
-      fr.read(read_key, 16) != 16) {
-    return false;
-  }
-  
-  if (!immo::constant_time_eq(read_key, key, 16)) {
-    return false;
-  }
-
-  g_store.seed(counter);
-  memcpy(g_psk, key, 16);
-  return true;
+  return immo::prov_write_and_verify(PROV_STORAGE_PATH, key, counter, g_store, g_psk);
 }
 
-static bool key_is_all_zeros() {
-  for (int i = 0; i < 16; i++)
-    if (g_psk[i] != 0) return false;
-  return true;
-}
+static bool key_is_all_zeros() { return immo::is_key_blank(g_psk); }
 
-// Load key from /ug_prov.bin if present and valid; else use compile-time default.
+// Load key from flash if provisioned, else use compile-time default.
 static void load_provisioning() {
-  Adafruit_LittleFS_Namespace::File f(InternalFS.open(PROV_STORAGE_PATH, FILE_O_READ));
-  if (!f || f.size() < 20) {
+  if (!immo::prov_load_key(PROV_STORAGE_PATH, g_psk))
     memcpy(g_psk, k_default_psk, 16);
-    return;
-  }
-  uint32_t magic = 0;
-  f.read(reinterpret_cast<uint8_t*>(&magic), 4);
-  if (magic != PROV_MAGIC) {
-    memcpy(g_psk, k_default_psk, 16);
-    return;
-  }
-  if (f.read(g_psk, 16) != 16) {
-    memcpy(g_psk, k_default_psk, 16);
-    return;
-  }
 }
 
 void start_advertising_once(uint16_t company_id, const uint8_t payload13[immo::PAYLOAD_LEN]) {
@@ -101,7 +56,7 @@ void start_advertising_once(uint16_t company_id, const uint8_t payload13[immo::P
 
   Bluefruit.Advertising.addData(BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA, msd, sizeof(msd));
 
-  Bluefruit.Advertising.setInterval(UGUISU_ADV_INTERVAL_MS / 0.625, UGUISU_ADV_INTERVAL_MS / 0.625);
+  Bluefruit.Advertising.setInterval((UGUISU_ADV_INTERVAL_MS * 8 + 4) / 5, (UGUISU_ADV_INTERVAL_MS * 8 + 4) / 5);
   Bluefruit.Advertising.restartOnDisconnect(false);
   Bluefruit.Advertising.start(0);
 }
@@ -131,19 +86,6 @@ static uint32_t wait_for_button_press_release(uint32_t timeout_ms) {
   return millis() - press_start;
 }
 
-[[noreturn]] void led_error_loop() {
-  if (PIN_ERROR_LED >= 0) {
-    pinMode(PIN_ERROR_LED, OUTPUT);
-    while (true) {
-      digitalWrite(PIN_ERROR_LED, HIGH);
-      delay(200);
-      digitalWrite(PIN_ERROR_LED, LOW);
-      delay(200);
-    }
-  }
-  while (true) delay(1000);
-}
-
 }  // namespace
 
 void setup() {
@@ -154,7 +96,7 @@ void setup() {
 
   if (!g_store.begin()) {
     Serial.println("InternalFS begin failed");
-    led_error_loop();
+    immo::led_error_loop(PIN_ERROR_LED);
   }
 
   load_provisioning();
