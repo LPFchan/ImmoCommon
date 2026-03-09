@@ -1,6 +1,6 @@
 # Guillemot — Ninebot G30 BLE Immobilizer Receiver
 
-Guillemot is the deck receiver in a three-part immobilizer system ([Uguisu](https://github.com/LPFchan/Uguisu) fob + [Whimbrel](https://github.com/LPFchan/Whimbrel) web app) for the Ninebot Max G30. It validates encrypted BLE advertisements from the fob and controls an SR latch that gates battery-to-ESC power via an inline XT60 splice. Male/female pigtails make it fully reversible—no permanent modification to the vehicle. Protocol and cryptography are handled by [ImmoCommon](https://github.com/LPFchan/ImmoCommon).
+Guillemot is the deck receiver in a three-part immobilizer system ([Uguisu](https://github.com/LPFchan/Immogen/tree/main/Uguisu) fob + [Whimbrel](https://github.com/LPFchan/Whimbrel) web app) for the Ninebot Max G30. It validates encrypted BLE advertisements from the fob and controls an SR latch that gates battery-to-ESC power via an inline XT60 splice. Male/female pigtails make it fully reversible—no permanent modification to the vehicle. Protocol and cryptography are handled by the shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib) in this monorepo ([Immogen](https://github.com/LPFchan/Immogen)).
 
 ---
 
@@ -72,7 +72,7 @@ JLCPCB P&P for SMT. Hand-solder XIAO edges, XT60 pigtails, and the GND jumper.
 
 ### Firmware
 
-[PlatformIO](https://platformio.org/) project in `firmware/guillemot/`
+[PlatformIO](https://platformio.org/) project in `firmware/`
 
 Scanning is duty-cycled (20 ms every 2 seconds) to conserve power. The receiver rejects any payload with an invalid AES-CCM MIC or a counter less than or equal to the last seen value (anti-replay).
 
@@ -80,8 +80,8 @@ Scanning is duty-cycled (20 ms every 2 seconds) to conserve power. The receiver 
 
 - Advertisement-based BLE (no persistent connection).
 - Payload: 4-byte monotonic counter, 1-byte command (0x01 = unlock, 0x02 = lock), 8-byte AES-CCM MIC.
-- Validation and crypto via [ImmoCommon](https://github.com/LPFchan/ImmoCommon).
-- Full protocol spec: [ImmoCommon README § BLE Protocol](https://github.com/LPFchan/ImmoCommon#ble-protocol).
+- Validation and crypto via shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib).
+- Full protocol spec: [Immogen README § BLE Protocol](https://github.com/LPFchan/Immogen#ble-protocol).
 
 ### Onboarding
 

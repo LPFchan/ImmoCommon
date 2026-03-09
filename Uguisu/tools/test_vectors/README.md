@@ -1,9 +1,9 @@
 # Test vectors (Uguisu fob)
 
-MIC test vectors are now maintained in the ImmoCommon submodule (shared by Uguisu and Guillemot):
+MIC test vectors are maintained in the shared lib:
 
 ```
-firmware/uguisu/lib/ImmoCommon/tools/test_vectors/
+lib/tools/test_vectors/
 ```
 
-See [ImmoCommon/tools/test_vectors/README.md](https://github.com/LPFchan/ImmoCommon/tree/main/tools/test_vectors) for usage.
+See [Immogen lib/tools/test_vectors](https://github.com/LPFchan/Immogen/tree/main/lib/tools/test_vectors) for usage.

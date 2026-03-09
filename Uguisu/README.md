@@ -1,6 +1,6 @@
 # Uguisu — Ninebot G30 BLE Immobilizer Fob
 
-Uguisu is the BLE key fob in a three-part immobilizer system ([Guillemot](https://github.com/LPFchan/Guillemot) receiver + [Whimbrel](https://github.com/LPFchan/Whimbrel) web app) for the Ninebot Max G30. It broadcasts short, encrypted BLE advertisements on button press to unlock or lock the vehicle. This repository contains the fob firmware and hardware design files. Protocol and cryptography via [ImmoCommon](https://github.com/LPFchan/ImmoCommon).
+Uguisu is the BLE key fob in a three-part immobilizer system ([Guillemot](https://github.com/LPFchan/Immogen/tree/main/Guillemot) receiver + [Whimbrel](https://github.com/LPFchan/Whimbrel) web app) for the Ninebot Max G30. It broadcasts short, encrypted BLE advertisements on button press to unlock or lock the vehicle. This repository contains the fob firmware and hardware design files. Protocol and cryptography via the shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib) in this monorepo ([Immogen](https://github.com/LPFchan/Immogen)).
 
 ---
 
@@ -48,7 +48,7 @@ KiCad (`Uguisu.kicad_sch` / `Uguisu.kicad_pcb`).
 | Low battery + Lock     | Red    | Rapid pulse loop for 2 s         |
 | Fatal error (FS fail)  | Red    | Fast blink + onboard LED         |
 
-All timing constants live in `firmware/uguisu/include/led_effects.h`. Use `tools/led_visualizer.html` (open in any browser) to preview and fine-tune durations before flashing.
+All timing constants live in `firmware/include/led_effects.h`. Use `tools/led_visualizer.html` (repo root; open in any browser) to preview and fine-tune durations before flashing.
 
 ### Operation
 
@@ -67,7 +67,7 @@ All timing constants live in `firmware/uguisu/include/led_effects.h`. Use `tools
 
 ### Firmware
 
-[PlatformIO](https://platformio.org/) project in `firmware/uguisu/`.
+[PlatformIO](https://platformio.org/) project in `firmware/`.
 
 **Boot flow:**
 
@@ -113,8 +113,8 @@ Next press wakes via GPIO (hardware SENSE on `UGUISU_PIN_BUTTON_NRF`).
 
 - Advertisement-based BLE (no persistent connection).
 - Payload: 4-byte monotonic counter, 1-byte command (0x01 = unlock, 0x02 = lock), 8-byte AES-CCM MIC.
-- Generation and crypto via [ImmoCommon](https://github.com/LPFchan/ImmoCommon).
-- Full protocol spec: [ImmoCommon README § BLE Protocol](https://github.com/LPFchan/ImmoCommon#ble-protocol).
+- Generation and crypto via shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib).
+- Full protocol spec: [Immogen README § BLE Protocol](https://github.com/LPFchan/Immogen#ble-protocol).
 
 ### Onboarding
 
