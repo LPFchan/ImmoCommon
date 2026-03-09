@@ -29,7 +29,7 @@ Mount Guillemot on the plastic underside of the deck for good 2.4 GHz RF.
 | D3, D4    | 1N4148W         | Gate isolation from buzzer rail sag                               | C81598           | $0.01  |
 | D5        | SMBJ45A         | 45 V TVS diode for transient suppression                          | C114005 (ext.)   | $0.08  |
 | C1        | 10 nF (0603)    | POR pulse differentiator                                          | C57112           | $0.003 |
-| C2        | 100 µF (1210)   | Bulk decoupling                                                   | C90143 (ext.)    | $0.31  |
+| C2        | 100 µF (1210)   | Bulk decoupling. EMK325ABJ107MM-P 16V X5R ±20%                   | C90143 (ext.)    | $0.31  |
 | C3, C4    | 1 µF (0603)     | RC delay bypass, gate isolation                                   | C15849           | $0.01  |
 | R1–R3, R7 | 100 kΩ (0603)   | Gate drive, pull-ups, RC delay (τ = 100 ms)                       | C25803           | $0.006 |
 | R4        | 1 MΩ (0603)     | P-FET gate pull-up                                                | C22935           | $0.001 |

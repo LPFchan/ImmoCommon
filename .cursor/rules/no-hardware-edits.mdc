@@ -1,0 +1,14 @@
+---
+description: Do not modify files under hardware folders
+alwaysApply: true
+---
+
+# No Hardware Edits
+
+Do not modify any files under `**/hardware/` directories in this project.
+
+- Do not edit KiCad schematics (`.kicad_sch`), PCBs (`.kicad_pcb`), or project files
+- Do not edit BOMs, production artifacts, or fabrication configs under hardware
+- If the user asks to change hardware, suggest they make edits in KiCad (or their EDA tool) directly, or explain what to change without applying edits
+
+You may still read hardware files to answer questions or understand the design.
