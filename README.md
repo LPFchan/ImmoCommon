@@ -1,29 +1,36 @@
 # Immogen — Ninebot G30 BLE Immobilizer Monorepo
 
-**Immogen** (formerly ImmoCommon) is the monorepo for the BLE immobilizer system for the Ninebot Max G30. It contains:
+**Immogen** is a three-part BLE immobilizer system for the Ninebot Max G30: [**Uguisu**](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) (key fob), [**Guillemot**](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) (deck receiver), and [**Whimbrel**](https://github.com/LPFchan/Whimbrel) (Web Serial provisioning app). Guillemot controls battery-to-ESC power via an inline XT60 splice; no valid BLE unlock means the scooter stays inoperable. Male/female pigtails make installation reversible—no permanent modification to the vehicle.
 
-- **`lib/`** — Shared C++ library (crypto, provisioning, storage) used by both firmwares
-- **`Guillemot/`** — Deck receiver firmware and hardware (validates BLE, controls power gate)
-- **`Uguisu/`** — Key fob firmware and hardware (broadcasts encrypted BLE on button press)
-- **`tools/`** — HTML utilities (LED visualizer, BLE timing simulator, buzzer tuner) and test vectors (gen_mic.py)
+```
+┌─────────────────┐       BLE advertisement        ┌──────────────────────┐
+│  UGUISU (FOB)   │ ─────────────────────────────> │ GUILLEMOT (RECEIVER) │
+│  XIAO nRF52840  │       (2.4 GHz, ~2 m)          │  XIAO nRF52840       │
+└───────┬─────────┘                                └──────────┬───────────┘
+        │                                                     │
+        │                 ┌────────────────────┐              │
+        └──────(USB-C)──> │ WHIMBREL (WEB APP) │ <──(USB-C)───┘
+       (Provisioning)     │ Chrome / Edge      │    (Provisioning)
+                          └────────────────────┘
+```
 
 Use [Whimbrel](https://github.com/LPFchan/Whimbrel) for firmware flashing and key provisioning via Web Serial.
 
 ---
 
-## Quick Start
+## Repository Structure
 
-```bash
-# Build receiver (Guillemot)
-cd Guillemot/firmware && pio run
-
-# Build fob (Uguisu)
-cd Uguisu/firmware && pio run
-```
+| Path | Description |
+| --- | --- |
+| **`lib/`** | Shared C++ library (crypto, provisioning, storage) used by both firmwares |
+| **`Guillemot/`** | Deck receiver—firmware, KiCad, BOM. See [Guillemot README](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) |
+| **`Uguisu/`** | Key fob—firmware, KiCad, BOM. See [Uguisu README](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) |
+| **`tools/`** | LED visualizer, BLE timing simulator, buzzer tuner (HTML); test vectors (`gen_mic.py`) |
+| **`logs/`** | Migration reports and guides |
 
 ---
 
-## Architecture
+## Components
 
 | Component | Role |
 | --- | --- |
@@ -36,7 +43,7 @@ cd Uguisu/firmware && pio run
 
 ## BLE Protocol
 
-Advertisement-based; no persistent connection. Both devices share the same company ID and pre-shared key (PSK).
+Advertisement-based; no persistent connection. Both devices share the same company ID and pre-shared key (PSK). For implementation details, see [Guillemot](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) and [Uguisu](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) READMEs.
 
 ### Payload (13 bytes after 2-byte company ID)
 
@@ -54,16 +61,27 @@ python3 tools/test_vectors/gen_mic.py --company-id 0xFFFF --counter 0 --command 
 
 ---
 
-## Releases
+## Quick Start
 
-Tag and push to create a release (both firmwares built, four artifacts):
+Pre-built firmware is available at [Releases](https://github.com/LPFchan/Immogen/releases). Use [Whimbrel](https://github.com/LPFchan/Whimbrel) to flash firmware and provision keys.
+
+**Build from source:**
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+# Build receiver (Guillemot)
+cd Guillemot/firmware && pio run
+
+# Build fob (Uguisu)
+cd Uguisu/firmware && pio run
 ```
 
-Artifacts: `guillemot-1.0.0.hex`, `guillemot-1.0.0.zip`, `uguisu-1.0.0.hex`, `uguisu-1.0.0.zip`.
+---
+
+## Further Reading
+
+- **Deck receiver (Guillemot):** [Guillemot README](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) — hardware, PCB layout, BOM, operation
+- **Key fob (Uguisu):** [Uguisu README](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) — hardware, GPIO, LED behaviour, boot flow
+- **Provisioning & flashing:** [Whimbrel](https://github.com/LPFchan/Whimbrel)
 
 ---
 
