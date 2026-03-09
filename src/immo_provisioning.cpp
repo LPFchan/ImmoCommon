@@ -188,4 +188,9 @@ bool prov_load_key(const char* path, uint8_t out_key[16]) {
   return true;
 }
 
+void prov_load_key_or_zero(const char* path, uint8_t out_key[16]) {
+  if (!prov_load_key(path, out_key))
+    memset(out_key, 0, 16);
+}
+
 }  // namespace immo

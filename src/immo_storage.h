@@ -4,6 +4,8 @@
 
 namespace immo {
 
+static constexpr size_t DEFAULT_COUNTER_LOG_MAX_BYTES = 4096;
+
 struct CounterRecord {
   uint32_t counter;
   uint32_t crc32;

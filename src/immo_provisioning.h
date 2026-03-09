@@ -8,6 +8,9 @@ namespace immo {
 // Magic prefix written before the PSK in flash. "PROV" in memory on LE ARM.
 static constexpr uint32_t PROV_MAGIC = 0x564F5250u;
 
+static constexpr const char* DEFAULT_PROV_PATH = "/prov.bin";
+static constexpr uint32_t DEFAULT_PROV_TIMEOUT_MS = 30000;
+
 // Write key to flash with PROV_MAGIC prefix, verify readback, seed counter store,
 // and copy key to runtime buffer. Returns false if write or verification fails.
 bool prov_write_and_verify(
@@ -20,6 +23,9 @@ bool prov_write_and_verify(
 
 // Load key from flash. Returns true if file has valid PROV_MAGIC + 16-byte key.
 bool prov_load_key(const char* path, uint8_t out_key[16]);
+
+// Load key from flash, zeroing out_key if not found or invalid.
+void prov_load_key_or_zero(const char* path, uint8_t out_key[16]);
 
 // Returns true if VBUS is present.
 bool prov_is_vbus_present();
