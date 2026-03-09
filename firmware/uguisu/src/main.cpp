@@ -14,31 +14,23 @@ using namespace Adafruit_LittleFS_Namespace;
 
 namespace {
 
-// Default PSK when not yet provisioned via Whimbrel (zeros).
-static constexpr uint8_t k_default_psk[16] = {0};
-
 static constexpr const char* COUNTER_LOG_PATH = "/ug_ctr.log";
 static constexpr const char* OLD_COUNTER_LOG_PATH = "/ug_ctr.old";
-static constexpr const char* PROV_STORAGE_PATH = "/prov.bin";
-static constexpr size_t COUNTER_LOG_MAX_BYTES = 4096;
-static constexpr uint32_t PROV_TIMEOUT_MS = 30000;
 
 // Runtime key: from Whimbrel provisioned flash or compile-time default.
 uint8_t g_psk[16];
 
-immo::CounterStore g_store(COUNTER_LOG_PATH, OLD_COUNTER_LOG_PATH, COUNTER_LOG_MAX_BYTES);
+immo::CounterStore g_store(COUNTER_LOG_PATH, OLD_COUNTER_LOG_PATH, immo::DEFAULT_COUNTER_LOG_MAX_BYTES);
 
 // Callback for provisioning success
 bool on_provision_success(const uint8_t key[16], uint32_t counter) {
-  return immo::prov_write_and_verify(PROV_STORAGE_PATH, key, counter, g_store, g_psk);
+  return immo::prov_write_and_verify(immo::DEFAULT_PROV_PATH, key, counter, g_store, g_psk);
 }
 
 static bool key_is_all_zeros() { return immo::is_key_blank(g_psk); }
 
-// Load key from flash if provisioned, else use compile-time default.
 static void load_provisioning() {
-  if (!immo::prov_load_key(PROV_STORAGE_PATH, g_psk))
-    memcpy(g_psk, k_default_psk, 16);
+  immo::prov_load_key_or_zero(immo::DEFAULT_PROV_PATH, g_psk);
 }
 
 void start_advertising_once(uint16_t company_id, const uint8_t payload13[immo::PAYLOAD_LEN]) {
@@ -100,7 +92,7 @@ void setup() {
   }
 
   load_provisioning();
-  immo::ensure_provisioned(PROV_TIMEOUT_MS, on_provision_success, load_provisioning, key_is_all_zeros);
+  immo::ensure_provisioned(immo::DEFAULT_PROV_TIMEOUT_MS, on_provision_success, load_provisioning, key_is_all_zeros);
 
   Serial.println("BOOTED:Uguisu");
   Bluefruit.begin();
