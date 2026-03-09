@@ -5,7 +5,7 @@
 - **`lib/`** — Shared C++ library (crypto, provisioning, storage) used by both firmwares
 - **`Guillemot/`** — Deck receiver firmware and hardware (validates BLE, controls power gate)
 - **`Uguisu/`** — Key fob firmware and hardware (broadcasts encrypted BLE on button press)
-- **`tools/`** — HTML utilities (LED visualizer, BLE timing simulator, buzzer tuner)
+- **`tools/`** — HTML utilities (LED visualizer, BLE timing simulator, buzzer tuner) and test vectors (gen_mic.py)
 
 Use [Whimbrel](https://github.com/LPFchan/Whimbrel) for firmware flashing and key provisioning via Web Serial.
 
@@ -49,7 +49,7 @@ Advertisement-based; no persistent connection. Both devices share the same compa
 ### Test vectors
 
 ```bash
-python3 lib/tools/test_vectors/gen_mic.py --company-id 0xFFFF --counter 0 --command 1 --key <32 hex chars>
+python3 tools/test_vectors/gen_mic.py --company-id 0xFFFF --counter 0 --command 1 --key <32 hex chars>
 ```
 
 ---

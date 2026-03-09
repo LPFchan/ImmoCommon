@@ -1,9 +1,9 @@
 # Test vectors (receiver)
 
-MIC test vectors are maintained in the shared lib:
+MIC test vectors are maintained at repo root:
 
 ```
-lib/tools/test_vectors/
+tools/test_vectors/
 ```
 
-See [Immogen lib/tools/test_vectors](https://github.com/LPFchan/Immogen/tree/main/lib/tools/test_vectors) for usage.
+See [Immogen tools/test_vectors](https://github.com/LPFchan/Immogen/tree/main/tools/test_vectors) for usage.
