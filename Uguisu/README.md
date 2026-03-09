@@ -59,6 +59,7 @@ All timing constants live in `firmware/include/led_effects.h`. Use `tools/led_vi
 
 ### Design Notes
 
+- **EasyEDA → KiCad:** Schematics and PCBs are designed in KiCad. [easyeda2kicad](https://github.com/wokwi/easyeda2kicad) is used to import symbols and footprints from EasyEDA/LCSC. Example: `easyeda2kicad --full --lcsc_id=Cxxxx` (replace `Cxxxx` with the LCSC part number).
 - **NVS wear:** Counter written every press (System OFF kills RAM). At 10 unlocks/day, ~2.7 years; wear-leveling extends this.
 
 ---

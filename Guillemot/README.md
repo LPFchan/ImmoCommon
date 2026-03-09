@@ -62,6 +62,7 @@ JLCPCB P&P for SMT. Hand-solder XIAO edges, XT60 pigtails, and the GND jumper.
 
 ### Design Notes
 
+- **EasyEDA → KiCad:** Schematics and PCBs are designed in KiCad. [easyeda2kicad](https://github.com/wokwi/easyeda2kicad) is used to import symbols and footprints from EasyEDA/LCSC. Example: `easyeda2kicad --full --lcsc_id=Cxxxx` (replace `Cxxxx` with the LCSC part number).
 - **AO3422:** 55 V Vds provides margin over the 42 V bus when locked.
 - **Gate drive R (100 kΩ):** Protects the 2N7002 and BZT Zeners.
 - **POR circuit (10 nF + 100 kΩ):** 1 ms RC differentiator—brief pulse zeros the latch at power-on.
