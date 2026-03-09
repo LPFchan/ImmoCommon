@@ -8,7 +8,7 @@ static constexpr int PIN_BUZZER = D3;
 
 // BLE scanning duty cycle
 static constexpr uint16_t SCAN_INTERVAL_MS = 500;
-static constexpr uint16_t SCAN_WINDOW_MS = 20;
+static constexpr uint16_t SCAN_WINDOW_MS = 25;
 
 // Manufacturer Specific Data company ID (2 bytes, little-endian in adverts).
 // Set to your chosen value; must match the fob when you use one. See PROTOCOL.md.
