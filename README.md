@@ -35,7 +35,7 @@ Use [Whimbrel](https://github.com/LPFchan/Whimbrel) for firmware flashing and ke
 | Component | Role |
 | --- | --- |
 | **Uguisu** | System OFF → button press → BLE broadcast ~2 s → System OFF |
-| **Guillemot** | Duty-cycled scan (20 ms / 2 s), validates adverts → SR latch → power gate |
+| **Guillemot** | Duty-cycled scan (25 ms / 500 ms, 5%), validates adverts → SR latch → power gate |
 | **lib/** | AES-128-CCM MIC, provisioning loop, counter storage (LittleFS) |
 | **Whimbrel** | Web app for flashing and provisioning |
 
@@ -82,6 +82,13 @@ cd Uguisu/firmware && pio run
 - **Deck receiver (Guillemot):** [Guillemot README](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) — hardware, PCB layout, BOM, operation
 - **Key fob (Uguisu):** [Uguisu README](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) — hardware, GPIO, LED behaviour, boot flow
 - **Provisioning & flashing:** [Whimbrel](https://github.com/LPFchan/Whimbrel)
+
+---
+
+## TBD
+
+- Uguisu enclosure CAD (3D print).
+- First-build validation: PPK2 power, BLE range through deck, pre-charge waveform.
 
 ---
 

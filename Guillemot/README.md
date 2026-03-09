@@ -35,7 +35,7 @@ Mount Guillemot on the plastic underside of the deck for good 2.4 GHz RF.
 | R4        | 1 MΩ (0603)     | P-FET gate pull-up                                                | C22935           | $0.001 |
 | R5        | 10 kΩ (0603)    | Bleeder resistor                                                  | C25804           | $0.001 |
 | R6        | 4.7 kΩ (0603)   | Piezo buzzer discharge resistor                                   | C23162           | $0.001 |
-| R8        | 47 Ω 2 W (2512) | Pre-charge resistor                                               | C136992 (ext.)   | $0.10  |
+| R8        | 47 Ω 2 W (2512) | Pre-charge resistor, inrush ~0.77–0.89 A                         | C136992 (ext.)   | $0.10  |
 | TP1–5     | XT60 + 12 AWG   | Pigtails and GND jumper                                           | Generic          | —      |
 | —         | PCB             | 54×34 mm, 2 oz outer                                              | JLCPCB           | $1.60  |
 
@@ -49,13 +49,15 @@ JLCPCB P&P for SMT. Hand-solder XIAO edges, XT60 pigtails, and the GND jumper.
 - **12 AWG GND jumper (critical):** Main battery return bypasses inner layers. Run an external silicone wire from the `BAT-` XT60 pad to the MOSFET source pad.
 - **Power traces:** `+BATT` and `ESC-` as top-layer pours. No high-current vias.
 - **Clearance:** ≥ 0.6 mm between 42 V power and 3.3 V logic.
+- **Pre-charge trace:** Q2 → R8 → `ESC-` routed at **1.0 mm** to survive initial ~40 W inrush surge.
 - **RF keepout:** Strip copper on all layers under the XIAO's BLE antenna trace.
+- **Assembly:** Single-sided (F.Cu) SMT for easy JLCPCB PCBA.
 
 ### Operation
 
 - **Unlock flow:** Uguisu advert → MCU validates → SET latch → Q HIGH → pre-charge 100 ms → MOSFET ON → buzzer tone.
 - **Lock flow:** Uguisu advert → MCU validates → buzzer tone → RESET latch → Q LOW → P-FET OFF, pre-charge OFF → MOSFET OFF.
-- **Power (locked):** ~22 μA (buck Iq + duty-cycled scan + latch). At 22 μA, a G30 (15.3 Ah) would theoretically take ~79 years to drain; battery self-discharge dominates in practice.
+- **Power (locked):** ~306 μA (buck Iq + 5% duty-cycled scan + latch). At 306 μA, a G30 (15.3 Ah) would theoretically take ~5.7 years to drain; battery self-discharge (~12 months) dominates in practice. See `logs/15-BLE_POWER_ANALYSIS_AND_DOCUMENTATION_DISCREPANCY.md` for derivation.
 - **Buzzer timing:** Unlock tone ~34 ms after 10 V rail up; lock tone before RESET.
 
 ### Design Notes
@@ -63,8 +65,10 @@ JLCPCB P&P for SMT. Hand-solder XIAO edges, XT60 pigtails, and the GND jumper.
 - **AO3422:** 55 V Vds provides margin over the 42 V bus when locked.
 - **Gate drive R (100 kΩ):** Protects the 2N7002 and BZT Zeners.
 - **POR circuit (10 nF + 100 kΩ):** 1 ms RC differentiator—brief pulse zeros the latch at power-on.
-- **Gate isolation (1N4148W + cap):** Buzzer draw exceeds bleeder supply; diode and cap prevent gate sag during tones.
-- **IPB042N10N3G:** Thermal pad should be stitched to B.Cu for sealed deck enclosures.
+- **RC delay (100 kΩ + 1 μF):** 1N4148W bypass for fast turn-off.
+- **Gate isolation (1N4148W + cap):** Buzzer draw exceeds bleeder supply; diode and 1 μF hold cap prevent gate sag during tones (Vgs ≈ 9.3 V).
+- **Gate pull-down (MMBT3904):** Via Q̄/RC, discharges hold cap for instant OFF.
+- **IPB042N10N3G:** Outperforms TO-220 standing upright in sealed deck enclosures when thermal pad is stitched to B.Cu. **IPB035N10NF2S (3.5 mΩ)** is the long-term successor depending on LCSC stock.
 
 ---
 
@@ -74,7 +78,7 @@ JLCPCB P&P for SMT. Hand-solder XIAO edges, XT60 pigtails, and the GND jumper.
 
 [PlatformIO](https://platformio.org/) project in `firmware/`
 
-Scanning is duty-cycled (20 ms every 2 seconds) to conserve power. The receiver rejects any payload with an invalid AES-CCM MIC or a counter less than or equal to the last seen value (anti-replay).
+Scanning is duty-cycled (25 ms every 500 ms, 5% duty) for reliable detection. P(detect) = 100% per button press because `scanWindow (25 ms) ≥ advInterval (20 ms)` guarantees full phase coverage. The receiver rejects any payload with an invalid AES-CCM MIC or a counter less than or equal to the last seen value (anti-replay).
 
 ### Protocol
 
