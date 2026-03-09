@@ -42,12 +42,6 @@ Advertisement-only; no persistent connection. Both devices share a company ID an
 
 For full protocol details see the [Guillemot](https://github.com/LPFchan/Immogen/tree/main/Guillemot#readme) and [Uguisu](https://github.com/LPFchan/Immogen/tree/main/Uguisu#readme) READMEs.
 
-### Test vectors
-
-```bash
-python3 tools/test_vectors/gen_mic.py --company-id 0xFFFF --counter 0 --command 1 --key <32 hex chars>
-```
-
 ## Quick Start
 
 Pre-built firmware is available on the [Releases](https://github.com/LPFchan/Immogen/releases) page. Use [Whimbrel](https://github.com/LPFchan/Whimbrel) to flash and provision keys via Web Serial.
