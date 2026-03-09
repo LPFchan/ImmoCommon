@@ -8,6 +8,7 @@
 #include <InternalFileSystem.h>
 
 #include "uguisu_config.h"
+#include "led_effects.h"
 #include <ImmoCommon.h>
 
 using namespace Adafruit_LittleFS_Namespace;
@@ -84,11 +85,12 @@ void setup() {
   Serial.begin(115200);
   delay(50);
 
+  led::init();
   pinMode(UGUISU_PIN_BUTTON, INPUT_PULLUP);
 
   if (!g_store.begin()) {
     Serial.println("InternalFS begin failed");
-    immo::led_error_loop(PIN_ERROR_LED);
+    led::error_loop(PIN_ERROR_LED);
   }
 
   load_provisioning();

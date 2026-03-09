@@ -37,10 +37,24 @@ KiCad (`Uguisu.kicad_sch` / `Uguisu.kicad_pcb`).
 | Green (LED1)  | D3  | P0.29    | LED1 pin 3, R3 120 Ω, active-low (sink)            |
 
 
+### RGB LED Behaviour
+
+| Situation              | Color  | Pattern                          |
+| ---------------------- | ------ | -------------------------------- |
+| Unlock                 | Green  | Single pulse (fade-in/hold/fade-out) |
+| Lock                   | Red    | Single pulse (fade-in/hold/fade-out) |
+| Serial provisioning    | Blue   | Repeating pulse loop             |
+| Low battery + Unlock   | Green  | Rapid pulse loop for 2 s         |
+| Low battery + Lock     | Red    | Rapid pulse loop for 2 s         |
+| Fatal error (FS fail)  | Red    | Fast blink + onboard LED         |
+
+All timing constants live in `firmware/uguisu/include/led_effects.h`. Use `tools/led_visualizer.html` (open in any browser) to preview and fine-tune durations before flashing.
+
 ### Operation
 
-- **Unlock flow:** Button press → GPIO wake → boot → init BLE → read/increment NVS → AES-128-CCM → broadcast ~2 s →`sd_power_system_off()`.
-- **Lock flow:** 1-second long press → same sequence, command 0x02.
+- **Unlock flow:** Short press (< 1 s) → green flash → BLE broadcast ~2 s → sleep.
+- **Lock flow:** Long press (≥ 1 s) → red flash → BLE broadcast ~2 s → sleep.
+- **Low battery:** Battery checked after button press; replaces single flash with 2 s pulse loop in the same color while advertising.
 - **Power:** < 5 μA standby, ~0.004 mAh per press (12–18 months between charges on 100 mAh LiPo). Charging via USB-C.
 
 ### Design Notes
@@ -55,7 +69,43 @@ KiCad (`Uguisu.kicad_sch` / `Uguisu.kicad_pcb`).
 
 [PlatformIO](https://platformio.org/) project in `firmware/uguisu/`.
 
-Boot routine checks `NRF_POWER->USBREGSTATUS` (`VBUSDETECT`). If USB connected: enters Whimbrel Provisioning Mode (waits for serial payload). If battery powered: full reset → BLE init → NVS read/increment/persist → AES-128-CCM → broadcast ~2 s → sleep QSPI flash (0xB9) → `sd_power_system_off()`. Next press wakes via GPIO (hardware SENSE).
+**Boot flow:**
+
+```
+led::init()
+g_store.begin()          — fail → error_loop() [red rapid blink + onboard LED, forever]
+load_provisioning()
+
+VBUS present?
+  yes → prov_led_task (blue pulse, FreeRTOS)
+        ensure_provisioned()   [waits for PROV: serial packet]
+        stop prov_led_task
+
+Bluefruit.begin() / setName / setTxPower
+
+wait_for_button_press_release(10 s)
+  timeout → system_off()
+
+command = press ≥ 1 s ? Lock : Unlock
+cmd_pin = Lock ? PIN_LED_R : PIN_LED_G
+low_bat = readVbat() < LED_LOWBAT_MV_THRESHOLD
+
+[crypto: nonce → msg → AES-128-CCM MIC]
+
+g_store.update(counter)
+start_advertising_once()     — BLE advertising starts
+adv_start = millis()
+
+low_bat?
+  yes → flash_low_battery(cmd_pin)   [~2 s repeating pulses, same color as command]
+  no  → flash_once(cmd_pin, ...)     [~750 ms single pulse]
+
+delay(UGUISU_ADVERTISE_MS - elapsed)   — wait out rest of advertising window
+
+system_off()
+```
+
+Next press wakes via GPIO (hardware SENSE on `UGUISU_PIN_BUTTON_NRF`).
 
 ### Protocol
 

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uguisu · LED Visualizer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #ccc;
+      font-family: 'Courier New', monospace;
+      padding: 32px 20px;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 640px; margin: 0 auto; }
+
+    h1 {
+      color: #fff;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      opacity: 0.8;
+    }
+
+    .subtitle {
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 1px;
+      margin-bottom: 32px;
+    }
+
+    /* ── LED Stage ── */
+    .led-stage {
+      background: #040404;
+      border: 1px solid #181818;
+      border-radius: 16px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .led-housing {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #2a2a2a, #111);
+      border: 2px solid #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .led-lens {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .led-lens::after {
+      content: '';
+      position: absolute;
+      top: 12%; left: 18%;
+      width: 22%; height: 22%;
+      background: rgba(255,255,255,0.35);
+      border-radius: 50%;
+    }
+
+    .status-label {
+      position: absolute;
+      bottom: 16px;
+      left: 0; right: 0;
+      text-align: center;
+      font-size: 10px;
+      color: #2a2a2a;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── Scenario Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 7px 14px;
+      border: 1px solid #1e1e1e;
+      background: transparent;
+      color: #3a3a3a;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      transition: color 0.1s, border-color 0.1s;
+    }
+
+    .tab:hover { border-color: #2a2a2a; color: #555; }
+    .tab.active           { background: #111; border-color: #333; color: #aaa; }
+    .tab.active.t-green   { border-color: #1e4a1e; color: #5cff6c; }
+    .tab.active.t-red     { border-color: #4a1e1e; color: #ff5c5c; }
+    .tab.active.t-blue    { border-color: #1e2a4a; color: #5c9fff; }
+    .tab.active.t-orange  { border-color: #4a2e1e; color: #ffaa5c; }
+
+    /* ── Parameters ── */
+    .params { margin-bottom: 24px; }
+
+    .param-section-label {
+      font-size: 9px;
+      color: #2a2a2a;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .param-label {
+      width: 190px;
+      font-size: 11px;
+      color: #555;
+      flex-shrink: 0;
+    }
+
+    .param-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 2px;
+      background: #1e1e1e;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .param-slider.synced { background: #1a2e1a; }
+    .param-slider.synced::-webkit-slider-thumb { background: #2a5c2a; border-color: #5cff5c; }
+
+    .param-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #444;
+      cursor: pointer;
+      border: 1px solid #666;
+      transition: background 0.2s;
+    }
+
+    .param-slider::-webkit-slider-thumb:hover { background: #666; }
+
+    .param-value {
+      width: 58px;
+      font-size: 11px;
+      color: #555;
+      text-align: right;
+    }
+
+    /* Sync toggle row */
+    .sync-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin: -4px 0 12px;
+      gap: 6px;
+    }
+
+    .sync-btn {
+      padding: 4px 10px;
+      border: 1px solid #1e1e1e;
+      background: transparent;
+      color: #2a2a2a;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 1px;
+      transition: all 0.15s;
+    }
+
+    .sync-btn:hover { border-color: #333; color: #444; }
+
+    .sync-btn.active {
+      border-color: #1e4a1e;
+      color: #5cff6c;
+      background: #091409;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .btn {
+      padding: 9px 22px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: opacity 0.1s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn-play { background: #0c200c; border: 1px solid #1c4a1c; color: #5cff6c; }
+    .btn-stop { background: #200c0c; border: 1px solid #4a1c1c; color: #ff5c5c; }
+
+    /* ── Code Output ── */
+    .code-section-label {
+      font-size: 9px;
+      color: #2a2a2a;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .code-block {
+      background: #060d16;
+      border: 1px solid #101a24;
+      border-radius: 10px;
+      padding: 18px 20px;
+      font-size: 12px;
+      line-height: 2;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .kw      { color: #c586c0; }
+    .macro   { color: #4ec9b0; }
+    .num     { color: #b5cea8; }
+    .comment { color: #3e5c3e; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Uguisu · LED Visualizer</h1>
+  <div class="subtitle">nRF52840 · XL-5050RGBC · Active-Low · B=D1 R=D2 G=D3</div>
+
+  <div class="led-stage">
+    <div class="led-housing">
+      <div class="led-lens" id="ledLens"></div>
+    </div>
+    <div class="status-label" id="statusLabel">idle</div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active t-green" data-s="unlock">Unlock (Green)</button>
+    <button class="tab" data-s="lock">Lock (Red)</button>
+    <button class="tab" data-s="dfu">Provision (Blue)</button>
+    <button class="tab" data-s="lowbat">Low Battery</button>
+  </div>
+
+  <div class="params">
+    <div class="param-section-label">Timing Parameters</div>
+    <div id="paramRows"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-play" id="btnPlay">▶  Play</button>
+    <button class="btn btn-stop" id="btnStop">■  Stop</button>
+  </div>
+
+  <div class="code-section-label">Generated C++ defines</div>
+  <div class="code-block" id="codeBlock"></div>
+
+</div>
+
+<script>
+// ── Scenario definitions ─────────────────────────────────────────────────
+const SCENARIOS = {
+  unlock: {
+    color: [0, 220, 70],
+    tabClass: 't-green',
+    statusText: 'unlock — green flash',
+    params: [
+      { id: 'rise_ms', label: 'Fade-in duration',  min: 50, max: 1200, step: 10, def: 200 },
+      { id: 'hold_ms', label: 'Hold at peak',      min: 0,  max: 500,  step: 10, def: 100 },
+      { id: 'fall_ms', label: 'Fade-out duration', min: 50, max: 1200, step: 10, def: 350 },
+    ],
+    syncable: true,
+    repeating: false,
+    code: (v) => [
+      `<span class="comment">// Unlock — single green flash</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_FLASH_RISE_MS</span>   <span class="num">${v.rise_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_FLASH_HOLD_MS</span>   <span class="num">${v.hold_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_FLASH_FALL_MS</span>   <span class="num">${v.fall_ms}</span>`,
+    ].join('\n'),
+    animate: (t, v) => {
+      const { rise_ms: r, hold_ms: h, fall_ms: f } = v;
+      const total = r + h + f;
+      if (t > total) return null;
+      if (t < r)         return ease(t / r);
+      if (t < r + h)     return 1;
+      return ease(1 - (t - r - h) / f);
+    },
+  },
+
+  lock: {
+    color: [255, 28, 0],
+    tabClass: 't-red',
+    statusText: 'lock — red flash',
+    params: [
+      { id: 'rise_ms', label: 'Fade-in duration',  min: 50, max: 1200, step: 10, def: 200 },
+      { id: 'hold_ms', label: 'Hold at peak',      min: 0,  max: 500,  step: 10, def: 100 },
+      { id: 'fall_ms', label: 'Fade-out duration', min: 50, max: 1200, step: 10, def: 350 },
+    ],
+    syncable: true,
+    repeating: false,
+    code: (v) => [
+      `<span class="comment">// Lock — single red flash</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_FLASH_RISE_MS</span>   <span class="num">${v.rise_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_FLASH_HOLD_MS</span>   <span class="num">${v.hold_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_FLASH_FALL_MS</span>   <span class="num">${v.fall_ms}</span>`,
+    ].join('\n'),
+    animate: (t, v) => {
+      const { rise_ms: r, hold_ms: h, fall_ms: f } = v;
+      const total = r + h + f;
+      if (t > total) return null;
+      if (t < r)         return ease(t / r);
+      if (t < r + h)     return 1;
+      return ease(1 - (t - r - h) / f);
+    },
+  },
+
+  dfu: {
+    color: [28, 80, 255],
+    tabClass: 't-blue',
+    statusText: 'provisioning — blue pulse',
+    params: [
+      { id: 'rise_ms', label: 'Fade-in duration',  min: 30,  max: 600,  step: 10, def: 120 },
+      { id: 'hold_ms', label: 'Hold at peak',      min: 0,   max: 400,  step: 10, def: 80  },
+      { id: 'fall_ms', label: 'Fade-out duration', min: 30,  max: 600,  step: 10, def: 200 },
+      { id: 'off_ms',  label: 'Gap (off) duration', min: 50, max: 1000, step: 10, def: 300 },
+    ],
+    syncable: true,
+    repeating: true,
+    code: (v) => [
+      `<span class="comment">// Serial provisioning — pulsed blue blink</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_PROV_RISE_MS</span>   <span class="num">${v.rise_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_PROV_HOLD_MS</span>   <span class="num">${v.hold_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_PROV_FALL_MS</span>   <span class="num">${v.fall_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_PROV_OFF_MS</span>    <span class="num">${v.off_ms}</span>`,
+    ].join('\n'),
+    animate: (t, v) => {
+      const { rise_ms: r, hold_ms: h, fall_ms: f, off_ms: g } = v;
+      const period = r + h + f + g;
+      const tmod = t % period;
+      if (tmod < r)           return ease(tmod / r);
+      if (tmod < r + h)       return 1;
+      if (tmod < r + h + f)   return ease(1 - (tmod - r - h) / f);
+      return 0;
+    },
+  },
+
+  lowbat: {
+    color: [255, 65, 0],
+    tabClass: 't-orange',
+    statusText: 'low battery — pulsed red',
+    params: [
+      { id: 'rise_ms',   label: 'Fade-in duration',   min: 10,  max: 300,  step: 5,   def: 40   },
+      { id: 'hold_ms',   label: 'Hold at peak',       min: 0,   max: 300,  step: 5,   def: 30   },
+      { id: 'fall_ms',   label: 'Fade-out duration',  min: 10,  max: 300,  step: 5,   def: 60   },
+      { id: 'off_ms',    label: 'Gap (off) duration', min: 20,  max: 500,  step: 5,   def: 150  },
+      { id: 'window_ms', label: 'Total window (ms)',  min: 500, max: 5000, step: 100, def: 2000 },
+    ],
+    syncable: true,
+    repeating: false,  // ends after window_ms
+    code: (v) => [
+      `<span class="comment">// Low battery — pulsed red flash, then system_off()</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_LOWBAT_RISE_MS</span>    <span class="num">${v.rise_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_LOWBAT_HOLD_MS</span>    <span class="num">${v.hold_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_LOWBAT_FALL_MS</span>    <span class="num">${v.fall_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_LOWBAT_OFF_MS</span>     <span class="num">${v.off_ms}</span>`,
+      `<span class="kw">#define</span> <span class="macro">LED_LOWBAT_WINDOW_MS</span>  <span class="num">${v.window_ms}</span>`,
+    ].join('\n'),
+    animate: (t, v) => {
+      if (t > v.window_ms) return null;
+      const { rise_ms: r, hold_ms: h, fall_ms: f, off_ms: g } = v;
+      const period = r + h + f + g;
+      const tmod = t % period;
+      if (tmod < r)           return ease(tmod / r);
+      if (tmod < r + h)       return 1;
+      if (tmod < r + h + f)   return ease(1 - (tmod - r - h) / f);
+      return 0;
+    },
+  },
+};
+
+// ── State ─────────────────────────────────────────────────────────────────
+let current = 'unlock';
+let savedVals = {};
+let syncRiseFall = false;
+let animId = null;
+let animRunning = false;
+
+// ── Element refs ──────────────────────────────────────────────────────────
+const lensEl    = document.getElementById('ledLens');
+const statusEl  = document.getElementById('statusLabel');
+const paramRows = document.getElementById('paramRows');
+const codeEl    = document.getElementById('codeBlock');
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function ease(t) {
+  t = Math.max(0, Math.min(1, t));
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+function getVals(s) {
+  const out = {};
+  for (const p of SCENARIOS[s].params)
+    out[p.id] = savedVals[s]?.[p.id] ?? p.def;
+  return out;
+}
+
+function setVal(s, id, v) {
+  if (!savedVals[s]) savedVals[s] = {};
+  savedVals[s][id] = +v;
+}
+
+function hasBothRiseFall(s) {
+  const ids = SCENARIOS[s].params.map(p => p.id);
+  return ids.includes('rise_ms') && ids.includes('fall_ms');
+}
+
+// ── LED render ────────────────────────────────────────────────────────────
+function setLED(brightness, r, g, b) {
+  const br = Math.max(0, Math.min(1, brightness));
+  if (br < 0.01) {
+    lensEl.style.background = '#1a1a1a';
+    lensEl.style.boxShadow  = 'none';
+    return;
+  }
+  const rr = Math.round(r * br);
+  const gg = Math.round(g * br);
+  const bb = Math.round(b * br);
+  const core  = `rgb(${Math.min(255,rr+90)},${Math.min(255,gg+90)},${Math.min(255,bb+90)})`;
+  const color = `rgb(${rr},${gg},${bb})`;
+  const g1 = Math.round(16 * br), g2 = Math.round(40 * br), g3 = Math.round(90 * br);
+  lensEl.style.background = core;
+  lensEl.style.boxShadow  =
+    `0 0 ${g1}px ${g1/2}px ${color},` +
+    `0 0 ${g2}px ${g2/2}px ${color},` +
+    `0 0 ${g3}px ${g3/2}px rgba(${rr},${gg},${bb},0.25)`;
+}
+
+function ledOff() { setLED(0, 0, 0, 0); }
+
+// ── Animation control ─────────────────────────────────────────────────────
+function stopAnim() {
+  if (animId) cancelAnimationFrame(animId);
+  animId = null;
+  animRunning = false;
+  ledOff();
+  statusEl.textContent = 'idle';
+}
+
+function playAnim(s) {
+  stopAnim();
+  animRunning = true;
+  const sc = SCENARIOS[s];
+  const [r, g, b] = sc.color;
+  const t0 = performance.now();
+  statusEl.textContent = sc.statusText;
+
+  function frame(now) {
+    if (!animRunning) return;
+    const t = now - t0;
+    const br = sc.animate(t, getVals(s));
+    if (br === null) {
+      ledOff();
+      statusEl.textContent = 'done';
+      animRunning = false;
+      return;
+    }
+    setLED(br, r, g, b);
+    animId = requestAnimationFrame(frame);
+  }
+  animId = requestAnimationFrame(frame);
+}
+
+// ── Sync helper ───────────────────────────────────────────────────────────
+function applySyncStyle() {
+  const show = syncRiseFall && hasBothRiseFall(current);
+  ['rise_ms', 'fall_ms'].forEach(id => {
+    const sl = document.getElementById(`sl_${id}`);
+    if (sl) sl.classList.toggle('synced', show);
+  });
+  const btn = document.getElementById('syncBtn');
+  if (btn) btn.classList.toggle('active', syncRiseFall);
+}
+
+function onParamChange(s, paramId, val) {
+  setVal(s, paramId, val);
+  const valEl = document.getElementById(`pv_${paramId}`);
+  if (valEl) valEl.textContent = val + ' ms';
+
+  // Propagate sync
+  if (syncRiseFall && (paramId === 'rise_ms' || paramId === 'fall_ms')) {
+    const otherId = paramId === 'rise_ms' ? 'fall_ms' : 'rise_ms';
+    const otherExists = SCENARIOS[s].params.some(p => p.id === otherId);
+    if (otherExists) {
+      setVal(s, otherId, val);
+      const otherSl = document.getElementById(`sl_${otherId}`);
+      const otherPv = document.getElementById(`pv_${otherId}`);
+      if (otherSl) { otherSl.value = val; }
+      if (otherPv) { otherPv.textContent = val + ' ms'; }
+    }
+  }
+  renderCode(s);
+  if (!animRunning) playAnim(current);
+}
+
+// ── UI render ─────────────────────────────────────────────────────────────
+function renderParams(s) {
+  paramRows.innerHTML = '';
+  const v = getVals(s);
+  const sc = SCENARIOS[s];
+
+  sc.params.forEach((p, i) => {
+    // Insert sync toggle between rise_ms and hold_ms (right after rise_ms)
+    if (p.id === 'hold_ms' && sc.syncable && hasBothRiseFall(s)) {
+      const syncRow = document.createElement('div');
+      syncRow.className = 'sync-row';
+      syncRow.innerHTML =
+        `<button class="sync-btn${syncRiseFall ? ' active' : ''}" id="syncBtn">` +
+        `⇔ sync rise &amp; fall</button>`;
+      paramRows.appendChild(syncRow);
+      syncRow.querySelector('#syncBtn').addEventListener('click', () => {
+        syncRiseFall = !syncRiseFall;
+        applySyncStyle();
+      });
+    }
+
+    const row = document.createElement('div');
+    row.className = 'param-row';
+    const isSyncable = sc.syncable && (p.id === 'rise_ms' || p.id === 'fall_ms');
+    row.innerHTML =
+      `<span class="param-label">${p.label}</span>` +
+      `<input type="range" class="param-slider${isSyncable && syncRiseFall ? ' synced' : ''}"` +
+      ` id="sl_${p.id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${v[p.id]}">` +
+      `<span class="param-value" id="pv_${p.id}">${v[p.id]} ms</span>`;
+    paramRows.appendChild(row);
+
+    document.getElementById(`sl_${p.id}`).addEventListener('input', (e) => {
+      onParamChange(s, p.id, +e.target.value);
+    });
+  });
+
+  renderCode(s);
+}
+
+function renderCode(s) {
+  codeEl.innerHTML = SCENARIOS[s].code(getVals(s));
+}
+
+function selectTab(s) {
+  document.querySelectorAll('.tab').forEach(b =>
+    b.classList.remove('active', 't-green', 't-red', 't-blue', 't-orange'));
+  document.querySelector(`.tab[data-s="${s}"]`).classList.add('active', SCENARIOS[s].tabClass);
+  current = s;
+  stopAnim();
+  renderParams(s);
+  playAnim(s);
+}
+
+// ── Event wiring ──────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn =>
+  btn.addEventListener('click', () => selectTab(btn.dataset.s)));
+
+document.getElementById('btnPlay').addEventListener('click', () => playAnim(current));
+document.getElementById('btnStop').addEventListener('click', () => stopAnim());
+
+// ── Init ──────────────────────────────────────────────────────────────────
+selectTab('unlock');
+</script>
+</body>
+</html>
