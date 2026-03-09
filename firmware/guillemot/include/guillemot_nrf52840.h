@@ -7,7 +7,7 @@ static constexpr int PIN_LATCH_RESET = D1;
 static constexpr int PIN_BUZZER = D3;
 
 // BLE scanning duty cycle
-static constexpr uint16_t SCAN_INTERVAL_MS = 2000;
+static constexpr uint16_t SCAN_INTERVAL_MS = 500;
 static constexpr uint16_t SCAN_WINDOW_MS = 20;
 
 // Manufacturer Specific Data company ID (2 bytes, little-endian in adverts).
