@@ -112,10 +112,7 @@ Next press wakes via GPIO (hardware SENSE on `UGUISU_PIN_BUTTON_NRF`).
 
 ### Protocol
 
-- Advertisement-based BLE (no persistent connection).
-- Payload: 4-byte monotonic counter, 1-byte command (0x01 = unlock, 0x02 = lock), 8-byte AES-CCM MIC.
-- Generation and crypto via shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib).
-- Full protocol spec: [Immogen README § BLE Protocol](https://github.com/LPFchan/Immogen#ble-protocol).
+Generation and crypto via shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib). See [Immogen README § BLE Protocol](https://github.com/LPFchan/Immogen#ble-protocol) for full specification.
 
 ### Onboarding
 

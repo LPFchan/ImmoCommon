@@ -83,10 +83,7 @@ Scanning is duty-cycled (25 ms every 500 ms, 5% duty) for reliable detection. P(
 
 ### Protocol
 
-- Advertisement-based BLE (no persistent connection).
-- Payload: 4-byte monotonic counter, 1-byte command (0x01 = unlock, 0x02 = lock), 8-byte AES-CCM MIC.
-- Validation and crypto via shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib).
-- Full protocol spec: [Immogen README § BLE Protocol](https://github.com/LPFchan/Immogen#ble-protocol).
+Validation and crypto via shared [lib/](https://github.com/LPFchan/Immogen/tree/main/lib). See [Immogen README § BLE Protocol](https://github.com/LPFchan/Immogen#ble-protocol) for full specification.
 
 ### Onboarding
 
