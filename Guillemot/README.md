@@ -79,7 +79,7 @@ JLCPCB P&P for SMT. Hand-solder XIAO edges, XT60 pigtails, and the GND jumper.
 
 [PlatformIO](https://platformio.org/) project in `firmware/`
 
-Scanning is duty-cycled (25 ms every 500 ms, 5% duty) for reliable detection. P(detect) = 100% per button press because `scanWindow (25 ms) ≥ advInterval (20 ms)` guarantees full phase coverage. The receiver rejects any payload with an invalid AES-CCM MIC or a counter less than or equal to the last seen value (anti-replay).
+Scanning is duty-cycled (25 ms every 500 ms, 5% duty) for reliable detection. P(detect) = 100% per button press because `scanWindow (25 ms) ≥ advInterval (20 ms)` guarantees full phase coverage. The receiver rejects any payload with an invalid AES-CCM MIC or a counter less than or equal to the last seen value (anti-replay). The receiver is also protected against MCU hangs by an 8-second hardware Watchdog Timer (WDT) which triggers a clean reboot without disrupting the latch state.
 
 ### Protocol
 

@@ -52,8 +52,8 @@ All timing constants live in `firmware/include/led_effects.h`. Use `tools/led_vi
 
 ### Operation
 
-- **Unlock flow:** Short press (< 1 s) → green flash → BLE broadcast ~2 s → sleep.
-- **Lock flow:** Long press (≥ 1 s) → red flash → BLE broadcast ~2 s → sleep.
+- **Unlock flow:** Short press (< 0.7 s) → green flash → BLE broadcast ~2 s → sleep.
+- **Lock flow:** Long press (≥ 0.7 s) → red flash → BLE broadcast ~2 s → sleep.
 - **Low battery:** Battery checked after button press; replaces single flash with 2 s pulse loop in the same color while advertising.
 - **Power:** ~30 μA standby (nRF52840 system-off + XIAO charging IC), ~0.006 mAh per press (12–18 months between charges on 400 mAh LiPo). Charging via USB-C.
 
@@ -85,10 +85,10 @@ VBUS present?
 
 Bluefruit.begin() / setName / setTxPower
 
-wait_for_button_press_release(10 s)
+wait_for_button_press_release(2 s)
   timeout → system_off()
 
-command = press ≥ 1 s ? Lock : Unlock
+command = press ≥ 0.7 s ? Lock : Unlock
 cmd_pin = Lock ? PIN_LED_R : PIN_LED_G
 low_bat = readVbat_mv() < LED_LOWBAT_MV_THRESHOLD
 

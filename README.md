@@ -30,13 +30,13 @@ Guillemot sits inline between the battery and ESC via an XT60 splice. Without a 
 
 ## BLE Protocol
 
-Advertisement-only; no persistent connection. Both devices share a company ID and pre-shared key (PSK). Each advertisement carries a 13-byte payload after the 2-byte company ID:
+Advertisement-only; no persistent connection. Both devices share a company ID, a 2-byte magic prefix (`0x494D`), and a pre-shared key (PSK). Each advertisement carries a 13-byte payload after the manufacturer specific data header (company ID + magic):
 
 
 | Offset | Size | Field   | Purpose                    |
 | ------ | ---- | ------- | -------------------------- |
-| 0      | 4    | counter | Anti-replay, monotonic     |
-| 4      | 1    | command | 0x01 = Unlock, 0x02 = Lock |
+| 0      | 4    | counter | Anti-replay, monotonic (AAD)|
+| 4      | 1    | command | 0x01 = Unlock, 0x02 = Lock (Encrypted) |
 | 5      | 8    | mic     | AES-128-CCM auth tag       |
 
 ## Quick Start
