@@ -27,10 +27,10 @@ static constexpr uint16_t MSD_COMPANY_ID = 0xFFFF;
 #define UGUISU_ADV_INTERVAL_MS 20
 
 // Long-press threshold for lock command (ms). Press >= this = Lock, else Unlock.
-#define UGUISU_LONG_PRESS_MS 1000
+#define UGUISU_LONG_PRESS_MS 700
 
 // Max time to wait for button press before sleeping (ms).
-#define UGUISU_BUTTON_TIMEOUT_MS 10000
+#define UGUISU_BUTTON_TIMEOUT_MS 2000
 
 // Error indicator: onboard LED for blink loop when InternalFS fails. Set -1 if no LED.
 #ifndef PIN_ERROR_LED

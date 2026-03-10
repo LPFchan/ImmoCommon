@@ -37,6 +37,7 @@ public:
 
 private:
   void rotateIfNeeded_();
+  void scan_file_(const char* path);
 
   const char* log_path_;
   const char* old_log_path_;

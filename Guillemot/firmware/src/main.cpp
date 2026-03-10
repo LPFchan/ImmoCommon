@@ -2,6 +2,7 @@
 
 #include <bluefruit.h>
 #include <nrf_soc.h>
+#include <nrf_wdt.h>
 
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
@@ -37,32 +38,40 @@ void buzzer_tone_ms(uint16_t hz, uint16_t duration_ms) {
   noTone(PIN_BUZZER);
 }
 
-bool parse_payload_from_report(ble_gap_evt_adv_report_t* report, immo::Payload& out) {
-  uint8_t msd[2 + immo::PAYLOAD_LEN];
+bool parse_payload_from_report(ble_gap_evt_adv_report_t* report, uint8_t ct[immo::MSG_LEN], uint8_t mic[immo::MIC_LEN]) {
+  uint8_t msd[4 + immo::PAYLOAD_LEN];
   const uint8_t len = Bluefruit.Scanner.parseReportByType(report, BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA, msd, sizeof(msd));
   if (len != sizeof(msd)) return false;
 
   const uint16_t company_id = static_cast<uint16_t>(msd[0] | (static_cast<uint16_t>(msd[1]) << 8));
   if (company_id != MSD_COMPANY_ID) return false;
 
-  const uint8_t* p = msd + 2;
-  out.counter = static_cast<uint32_t>(p[0] | (static_cast<uint32_t>(p[1]) << 8) | (static_cast<uint32_t>(p[2]) << 16) |
-                                      (static_cast<uint32_t>(p[3]) << 24));
-  out.command = static_cast<immo::Command>(p[4]);
-  memcpy(out.mic, p + 5, immo::MIC_LEN);
+  const uint16_t magic = static_cast<uint16_t>(msd[2] | (static_cast<uint16_t>(msd[3]) << 8));
+  if (magic != immo::IMMOGEN_MAGIC) return false;
+
+  const uint8_t* p = msd + 4;
+  memcpy(ct, p, immo::MSG_LEN);
+  memcpy(mic, p + immo::MSG_LEN, immo::MIC_LEN);
   return true;
 }
 
-bool verify_payload(const immo::Payload& pl) {
+bool verify_payload(const uint8_t ct[immo::MSG_LEN], const uint8_t mic[immo::MIC_LEN], immo::Payload& out_pl) {
+  // Extract counter (first 4 bytes of ct, which are unencrypted AAD)
+  const uint32_t counter = static_cast<uint32_t>(ct[0] | (static_cast<uint32_t>(ct[1]) << 8) | (static_cast<uint32_t>(ct[2]) << 16) | (static_cast<uint32_t>(ct[3]) << 24));
+
   uint8_t nonce[immo::NONCE_LEN];
-  immo::build_nonce(pl.counter, nonce);
+  immo::build_nonce(counter, nonce);
 
   uint8_t msg[immo::MSG_LEN];
-  immo::build_msg(pl.counter, pl.command, msg);
-
   uint8_t expected[immo::MIC_LEN];
-  if (!immo::ccm_mic_8(g_psk, nonce, msg, sizeof(msg), expected)) return false;
-  return immo::constant_time_eq(expected, pl.mic, immo::MIC_LEN);
+  if (!immo::ccm_auth_decrypt(g_psk, nonce, ct, immo::MSG_LEN, 4, msg, expected)) return false;
+
+  if (!immo::constant_time_eq(expected, mic, immo::MIC_LEN)) return false;
+
+  out_pl.counter = counter;
+  out_pl.command = static_cast<immo::Command>(msg[4]);
+  memcpy(out_pl.mic, mic, immo::MIC_LEN);
+  return true;
 }
 
 void handle_valid_command(const immo::Payload& pl) {
@@ -89,10 +98,13 @@ void handle_valid_command(const immo::Payload& pl) {
 }
 
 void scan_callback(ble_gap_evt_adv_report_t* report) {
-  immo::Payload pl{};
-  if (!parse_payload_from_report(report, pl)) return;
+  uint8_t ct[immo::MSG_LEN];
+  uint8_t mic[immo::MIC_LEN];
+  if (!parse_payload_from_report(report, ct, mic)) return;
   if (key_is_all_zeros()) return;
-  if (!verify_payload(pl)) return;
+  
+  immo::Payload pl{};
+  if (!verify_payload(ct, mic, pl)) return;
   handle_valid_command(pl);
 }
 
@@ -129,10 +141,16 @@ void setup() {
   Bluefruit.Scanner.setIntervalMS(SCAN_INTERVAL_MS, SCAN_WINDOW_MS);
   Bluefruit.Scanner.start(0);
 
+  nrf_wdt_behaviour_set(NRF_WDT, NRF_WDT_BEHAVIOUR_RUN_SLEEP);
+  nrf_wdt_reload_value_set(NRF_WDT, (8000 * 32768) / 1000); // 8 second timeout
+  nrf_wdt_reload_request_enable(NRF_WDT, NRF_WDT_RR0);
+  nrf_wdt_task_trigger(NRF_WDT, NRF_WDT_TASK_START);
+
   Serial.println("Guillemot scanning");
   Serial.println("BOOTED:Guillemot");
 }
 
 void loop() {
+  nrf_wdt_reload_request_set(NRF_WDT, NRF_WDT_RR0);
   sd_app_evt_wait();
 }

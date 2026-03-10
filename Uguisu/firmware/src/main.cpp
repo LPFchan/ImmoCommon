@@ -38,10 +38,12 @@ static void prov_led_task(void*) {
 }
 
 void start_advertising_once(uint16_t company_id, const uint8_t payload13[immo::PAYLOAD_LEN]) {
-  uint8_t msd[2 + immo::PAYLOAD_LEN];
+  uint8_t msd[4 + immo::PAYLOAD_LEN];
   msd[0] = static_cast<uint8_t>(company_id & 0xFF);
   msd[1] = static_cast<uint8_t>((company_id >> 8) & 0xFF);
-  memcpy(&msd[2], payload13, immo::PAYLOAD_LEN);
+  msd[2] = static_cast<uint8_t>(immo::IMMOGEN_MAGIC & 0xFF);
+  msd[3] = static_cast<uint8_t>((immo::IMMOGEN_MAGIC >> 8) & 0xFF);
+  memcpy(&msd[4], payload13, immo::PAYLOAD_LEN);
 
   Bluefruit.Advertising.stop();
   Bluefruit.Advertising.clearData();
@@ -60,14 +62,20 @@ void start_advertising_once(uint16_t company_id, const uint8_t payload13[immo::P
 // Waits for button press and release, returns press duration in ms.
 // Button is active LOW (INPUT_PULLUP). Returns 0 if timeout.
 static uint32_t wait_for_button_press_release(uint32_t timeout_ms) {
-  const uint32_t deadline = millis() + timeout_ms;
-  while (millis() < deadline && digitalRead(UGUISU_PIN_BUTTON) != LOW) {
-    delay(10);
+  if (digitalRead(UGUISU_PIN_BUTTON) != LOW) {
+    // Pin already HIGH. We woke from sleep but user already released.
+    // Treat as a very short press (Unlock).
+    return 1; 
   }
-  if (digitalRead(UGUISU_PIN_BUTTON) != LOW) return 0;
 
+  const uint32_t deadline = millis() + timeout_ms;
   const uint32_t press_start = millis();
+
   while (millis() < deadline && digitalRead(UGUISU_PIN_BUTTON) == LOW) {
+    if (millis() - press_start >= UGUISU_LONG_PRESS_MS) {
+      // Threshold reached, no need to wait for release
+      return UGUISU_LONG_PRESS_MS; 
+    }
     delay(10);
   }
   return millis() - press_start;
@@ -120,13 +128,14 @@ void setup() {
   uint8_t msg[immo::MSG_LEN];
   immo::build_msg(counter, command, msg);
 
+  uint8_t ct[immo::MSG_LEN];
   uint8_t mic[immo::MIC_LEN];
-  const bool ok = immo::ccm_mic_8(g_psk, nonce, msg, sizeof(msg), mic);
+  const bool ok = immo::ccm_auth_encrypt(g_psk, nonce, msg, sizeof(msg), 4, ct, mic);
   if (!ok) system_off();
 
   uint8_t payload13[immo::PAYLOAD_LEN];
-  memcpy(&payload13[0], msg, sizeof(msg));
-  memcpy(&payload13[sizeof(msg)], mic, sizeof(mic));
+  memcpy(&payload13[0], ct, sizeof(ct));
+  memcpy(&payload13[sizeof(ct)], mic, sizeof(mic));
 
   g_store.update(counter);
   start_advertising_once(MSD_COMPANY_ID, payload13);

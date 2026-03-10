@@ -33,8 +33,12 @@ bool CounterStore::begin() {
 
 void CounterStore::load() {
   last_counter_ = 0;
+  scan_file_(log_path_);
+  scan_file_(old_log_path_);
+}
 
-  Adafruit_LittleFS_Namespace::File f(InternalFS.open(log_path_, Adafruit_LittleFS_Namespace::FILE_O_READ));
+void CounterStore::scan_file_(const char* path) {
+  Adafruit_LittleFS_Namespace::File f(InternalFS.open(path, Adafruit_LittleFS_Namespace::FILE_O_READ));
   if (!f) return;
 
   CounterRecord rec{};
