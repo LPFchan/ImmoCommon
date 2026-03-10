@@ -44,7 +44,7 @@ void ensure_provisioned(
     uint32_t timeout_ms,
     bool (*on_success)(const uint8_t[16], uint32_t),
     void (*load_provisioning)(),
-    bool (*is_provisioned)()
+    bool (*is_unprovisioned)()
 );
 
 }  // namespace immo

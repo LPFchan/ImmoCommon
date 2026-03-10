@@ -56,7 +56,14 @@ inline uint16_t readVbat_mv() {
   analogReference(AR_INTERNAL_3_0);
   analogReadResolution(12);
   delay(1);  // allow divider to settle
-  const uint16_t mv = (uint16_t)((uint32_t)analogRead(UGUISU_VBAT_PIN) * 6000u / 4096u);
+  
+  uint32_t sum = 0;
+  for (int i = 0; i < 4; i++) {
+    sum += analogRead(UGUISU_VBAT_PIN);
+    delay(1);
+  }
+  const uint16_t mv = (uint16_t)((sum / 4) * 6000u / 4096u);
+
 #ifdef VBAT_ENABLE
   digitalWrite(VBAT_ENABLE, HIGH);  // disable PMOS → stop divider current draw
 #endif

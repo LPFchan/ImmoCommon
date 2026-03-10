@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate AES-128-CCM MIC test vectors for Uguisu/Guillemot BLE immobilizer."""
+"""Generate standard RFC 3610 AES-128-CCM MIC test vectors for Uguisu/Guillemot BLE immobilizer."""
 
 import argparse
 import binascii
@@ -34,7 +34,7 @@ def parse_key(hex_str: str) -> bytes:
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Generate AES-128-CCM MIC for Uguisu/Guillemot test vectors."
+        description="Generate standard RFC 3610 AES-128-CCM MIC for Uguisu/Guillemot test vectors."
     )
     ap.add_argument("--counter", type=parse_int, required=True)
     ap.add_argument("--command", type=parse_int, required=True)
@@ -51,21 +51,39 @@ def main() -> None:
     command = args.command & 0xFF
     company_id = args.company_id & 0xFFFF
 
-    nonce = le32(counter) + (b"\x00" * 9)  # 13 bytes
-    msg = le32(counter) + bytes([command])  # 5 bytes
+    # RFC 3610 Nonce: 13 bytes for L=2 (our case)
+    # nRF52 SoftDevice/Bluefruit usually expects 13-byte nonces for CCM.
+    nonce = le32(counter) + (b"\x00" * 9)
+    
+    # Split into AAD and Payload as per standard CCM usage in firmware
+    aad = le32(counter)      # 4 bytes
+    payload = bytes([command]) # 1 byte
 
-    aesccm = AESCCM(parse_key(args.key), tag_length=8)
-    ct_and_tag = aesccm.encrypt(nonce, msg, None)
-    tag = ct_and_tag[-8:]
+    key = parse_key(args.key)
+    aesccm = AESCCM(key, tag_length=8)
+    
+    # Encrypt using standard library (RFC 3610 compliant)
+    # ct_and_tag = ciphertext(payload_len) + tag(8)
+    ct_and_tag = aesccm.encrypt(nonce, payload, aad)
+    
+    ct = ct_and_tag[:-8]
+    mic = ct_and_tag[-8:]
 
-    payload = msg + tag  # 13 bytes
-    msd = le16(company_id) + payload
+    # Resulting 13-byte payload for BLE advertisement:
+    # AAD(4) + CT(1) + MIC(8)
+    full_payload = aad + ct + mic
+    msd = le16(company_id) + full_payload
 
-    print("nonce:", nonce.hex())
-    print("msg:", msg.hex())
-    print("mic:", tag.hex())
-    print("payload_13B:", payload.hex())
-    print("msd_company_plus_payload:", msd.hex())
+    print("--- RFC 3610 CCM Vector ---")
+    print(f"Key:      {key.hex()}")
+    print(f"Nonce:    {nonce.hex()}")
+    print(f"AAD:      {aad.hex()} (Counter)")
+    print(f"Payload:  {payload.hex()} (Command)")
+    print(f"CT:       {ct.hex()}")
+    print(f"MIC:      {mic.hex()}")
+    print(f"Full PL:  {full_payload.hex()} (13B)")
+    print(f"MSD:      {msd.hex()}")
+    print("---------------------------")
 
 
 if __name__ == "__main__":

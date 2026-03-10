@@ -20,8 +20,24 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install PlatformIO
-        run: pip install -U platformio
+      - name: Install dependencies
+        run: |
+          pip install -U platformio
+          pip install cryptography
+
+      - name: Verify Cryptography Implementation
+        run: |
+          # Test vector: Counter=1, Cmd=1 (Unlock), Key=00...0f
+          # Expected MSD output: ffff0100000084e7a8dc340965c3bd
+          EXPECTED="ffff0100000084e7a8dc340965c3bd"
+          RESULT=$(python3 tools/test_vectors/gen_mic.py --counter 1 --command 1 --key 000102030405060708090a0b0c0d0e0f | grep "MSD:" | awk '{print $2}')
+          if [ "$RESULT" != "$EXPECTED" ]; then
+            echo "Crypto regression detected!"
+            echo "Expected: $EXPECTED"
+            echo "Got:      $RESULT"
+            exit 1
+          fi
+          echo "Crypto validation passed."
 
       - name: Build Guillemot
         working-directory: Guillemot/firmware

@@ -134,13 +134,13 @@ void ensure_provisioned(
     uint32_t timeout_ms,
     bool (*on_success)(const uint8_t[16], uint32_t),
     void (*load_provisioning)(),
-    bool (*is_provisioned)()
+    bool (*is_unprovisioned)()
 ) {
   if (prov_is_vbus_present()) {
     prov_run_serial_loop(timeout_ms, on_success);
     if (load_provisioning) load_provisioning();
   }
-  while (is_provisioned && !is_provisioned() && prov_is_vbus_present()) {
+  while (is_unprovisioned && is_unprovisioned() && prov_is_vbus_present()) {
     prov_run_serial_loop(timeout_ms, on_success);
     if (load_provisioning) load_provisioning();
   }

@@ -45,48 +45,76 @@ void build_msg(uint32_t counter, Command command, uint8_t msg[MSG_LEN]) {
 bool ccm_auth_encrypt(const uint8_t key[16], const uint8_t nonce[NONCE_LEN], const uint8_t* msg, size_t msg_len, size_t aad_len, uint8_t* out_ct, uint8_t out_mic[MIC_LEN]) {
   if (msg_len > 0xFFFFu || aad_len > msg_len) return false;
 
+  const size_t payload_len = msg_len - aad_len;
   const uint8_t L = 2;
   const uint8_t M = MIC_LEN;
-  const uint8_t flags_b0 = static_cast<uint8_t>(((M - 2) / 2) << 3) | static_cast<uint8_t>(L - 1);
+  
+  // RFC 3610: B0 = Flags | Nonce | PayloadLength
+  // Flags: bit 6 is Adata (1 if AAD present), bits 5-3 are (M-2)/2, bits 2-0 are L-1
+  const uint8_t flags_b0 = static_cast<uint8_t>((aad_len > 0 ? 0x40 : 0) | (((M - 2) / 2) << 3) | (L - 1));
 
   uint8_t b0[16]{};
   b0[0] = flags_b0;
   memcpy(&b0[1], nonce, NONCE_LEN);
-  b0[14] = static_cast<uint8_t>((msg_len >> 8) & 0xFF);
-  b0[15] = static_cast<uint8_t>(msg_len & 0xFF);
+  b0[14] = static_cast<uint8_t>((payload_len >> 8) & 0xFF);
+  b0[15] = static_cast<uint8_t>(payload_len & 0xFF);
 
   uint8_t x[16]{};
   uint8_t tmp[16]{};
   xor_block(tmp, x, b0);
   if (!aes128_ecb_encrypt(key, tmp, x)) return false;
 
-  size_t offset = 0;
-  while (offset < msg_len) {
+  // If AAD present, process AAD blocks
+  if (aad_len > 0) {
     uint8_t block[16]{};
-    const size_t n = min(static_cast<size_t>(16), msg_len - offset);
-    memcpy(block, msg + offset, n);
-    xor_block(tmp, x, block);
-    if (!aes128_ecb_encrypt(key, tmp, x)) return false;
-    offset += n;
+    // RFC 3610: AAD blocks start with 2-byte or 6-byte length header.
+    // Here we assume aad_len < 0xFF00, so 2-byte header.
+    block[0] = static_cast<uint8_t>((aad_len >> 8) & 0xFF);
+    block[1] = static_cast<uint8_t>(aad_len & 0xFF);
+    
+    size_t aad_idx = 0;
+    size_t block_idx = 2;
+    while (aad_idx < aad_len) {
+      const size_t n = min(static_cast<size_t>(16 - block_idx), aad_len - aad_idx);
+      memcpy(&block[block_idx], &msg[aad_idx], n);
+      aad_idx += n;
+      block_idx += n;
+      
+      if (block_idx == 16 || aad_idx == aad_len) {
+        xor_block(tmp, x, block);
+        if (!aes128_ecb_encrypt(key, tmp, x)) return false;
+        memset(block, 0, 16);
+        block_idx = 0;
+      }
+    }
   }
 
+  // Process payload blocks for authentication
+  size_t payload_idx = 0;
+  while (payload_idx < payload_len) {
+    uint8_t block[16]{};
+    const size_t n = min(static_cast<size_t>(16), payload_len - payload_idx);
+    memcpy(block, &msg[aad_len + payload_idx], n);
+    xor_block(tmp, x, block);
+    if (!aes128_ecb_encrypt(key, tmp, x)) return false;
+    payload_idx += n;
+  }
+
+  // Generate MIC (S0 encryption of final X)
   uint8_t a0[16]{};
   a0[0] = static_cast<uint8_t>(L - 1);
   memcpy(&a0[1], nonce, NONCE_LEN);
-  a0[14] = 0;
-  a0[15] = 0;
-
+  // a0[14, 15] are 0 for S0
+  
   uint8_t s0[16]{};
   if (!aes128_ecb_encrypt(key, a0, s0)) return false;
-
   for (size_t i = 0; i < M; i++) out_mic[i] = static_cast<uint8_t>(x[i] ^ s0[i]);
 
-  for (size_t i = 0; i < aad_len; i++) {
-    out_ct[i] = msg[i];
-  }
+  // Encryption of payload
+  for (size_t i = 0; i < aad_len; i++) out_ct[i] = msg[i];
 
-  size_t offset_enc = aad_len;
-  for (uint16_t ctr_i = 1; offset_enc < msg_len; ctr_i++) {
+  size_t offset_enc = 0;
+  for (uint16_t ctr_i = 1; offset_enc < payload_len; ctr_i++) {
     uint8_t ai[16]{};
     ai[0] = static_cast<uint8_t>(L - 1);
     memcpy(&ai[1], nonce, NONCE_LEN);
@@ -96,9 +124,9 @@ bool ccm_auth_encrypt(const uint8_t key[16], const uint8_t nonce[NONCE_LEN], con
     uint8_t si[16]{};
     if (!aes128_ecb_encrypt(key, ai, si)) return false;
 
-    const size_t n = min(static_cast<size_t>(16), msg_len - offset_enc);
+    const size_t n = min(static_cast<size_t>(16), payload_len - offset_enc);
     for (size_t j = 0; j < n; j++) {
-      out_ct[offset_enc + j] = msg[offset_enc + j] ^ si[j];
+      out_ct[aad_len + offset_enc + j] = msg[aad_len + offset_enc + j] ^ si[j];
     }
     offset_enc += n;
   }
@@ -109,14 +137,16 @@ bool ccm_auth_encrypt(const uint8_t key[16], const uint8_t nonce[NONCE_LEN], con
 bool ccm_auth_decrypt(const uint8_t key[16], const uint8_t nonce[NONCE_LEN], const uint8_t* ct, size_t ct_len, size_t aad_len, uint8_t* out_msg, uint8_t out_mic[MIC_LEN]) {
   if (ct_len > 0xFFFFu || aad_len > ct_len) return false;
 
-  for (size_t i = 0; i < aad_len; i++) {
-    out_msg[i] = ct[i];
-  }
-
+  const size_t payload_len = ct_len - aad_len;
   const uint8_t L = 2;
   const uint8_t M = MIC_LEN;
-  size_t offset_enc = aad_len;
-  for (uint16_t ctr_i = 1; offset_enc < ct_len; ctr_i++) {
+
+  // Copy AAD to out_msg
+  for (size_t i = 0; i < aad_len; i++) out_msg[i] = ct[i];
+
+  // Decrypt payload
+  size_t offset_enc = 0;
+  for (uint16_t ctr_i = 1; offset_enc < payload_len; ctr_i++) {
     uint8_t ai[16]{};
     ai[0] = static_cast<uint8_t>(L - 1);
     memcpy(&ai[1], nonce, NONCE_LEN);
@@ -126,44 +156,64 @@ bool ccm_auth_decrypt(const uint8_t key[16], const uint8_t nonce[NONCE_LEN], con
     uint8_t si[16]{};
     if (!aes128_ecb_encrypt(key, ai, si)) return false;
 
-    const size_t n = min(static_cast<size_t>(16), ct_len - offset_enc);
+    const size_t n = min(static_cast<size_t>(16), payload_len - offset_enc);
     for (size_t j = 0; j < n; j++) {
-      out_msg[offset_enc + j] = ct[offset_enc + j] ^ si[j];
+      out_msg[aad_len + offset_enc + j] = ct[aad_len + offset_enc + j] ^ si[j];
     }
     offset_enc += n;
   }
 
-  const uint8_t flags_b0 = static_cast<uint8_t>(((M - 2) / 2) << 3) | static_cast<uint8_t>(L - 1);
+  // Authentication: re-compute MIC
+  const uint8_t flags_b0 = static_cast<uint8_t>((aad_len > 0 ? 0x40 : 0) | (((M - 2) / 2) << 3) | (L - 1));
   uint8_t b0[16]{};
   b0[0] = flags_b0;
   memcpy(&b0[1], nonce, NONCE_LEN);
-  b0[14] = static_cast<uint8_t>((ct_len >> 8) & 0xFF);
-  b0[15] = static_cast<uint8_t>(ct_len & 0xFF);
+  b0[14] = static_cast<uint8_t>((payload_len >> 8) & 0xFF);
+  b0[15] = static_cast<uint8_t>(payload_len & 0xFF);
 
   uint8_t x[16]{};
   uint8_t tmp[16]{};
   xor_block(tmp, x, b0);
   if (!aes128_ecb_encrypt(key, tmp, x)) return false;
 
-  size_t offset = 0;
-  while (offset < ct_len) {
+  if (aad_len > 0) {
     uint8_t block[16]{};
-    const size_t n = min(static_cast<size_t>(16), ct_len - offset);
-    memcpy(block, out_msg + offset, n);
+    block[0] = static_cast<uint8_t>((aad_len >> 8) & 0xFF);
+    block[1] = static_cast<uint8_t>(aad_len & 0xFF);
+    
+    size_t aad_idx = 0;
+    size_t block_idx = 2;
+    while (aad_idx < aad_len) {
+      const size_t n = min(static_cast<size_t>(16 - block_idx), aad_len - aad_idx);
+      memcpy(&block[block_idx], &out_msg[aad_idx], n);
+      aad_idx += n;
+      block_idx += n;
+      
+      if (block_idx == 16 || aad_idx == aad_len) {
+        xor_block(tmp, x, block);
+        if (!aes128_ecb_encrypt(key, tmp, x)) return false;
+        memset(block, 0, 16);
+        block_idx = 0;
+      }
+    }
+  }
+
+  size_t payload_idx = 0;
+  while (payload_idx < payload_len) {
+    uint8_t block[16]{};
+    const size_t n = min(static_cast<size_t>(16), payload_len - payload_idx);
+    memcpy(block, &out_msg[aad_len + payload_idx], n);
     xor_block(tmp, x, block);
     if (!aes128_ecb_encrypt(key, tmp, x)) return false;
-    offset += n;
+    payload_idx += n;
   }
 
   uint8_t a0[16]{};
   a0[0] = static_cast<uint8_t>(L - 1);
   memcpy(&a0[1], nonce, NONCE_LEN);
-  a0[14] = 0;
-  a0[15] = 0;
-
+  
   uint8_t s0[16]{};
   if (!aes128_ecb_encrypt(key, a0, s0)) return false;
-
   for (size_t i = 0; i < M; i++) out_mic[i] = static_cast<uint8_t>(x[i] ^ s0[i]);
 
   return true;

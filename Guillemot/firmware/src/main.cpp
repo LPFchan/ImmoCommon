@@ -147,7 +147,11 @@ void setup() {
   nrf_wdt_task_trigger(NRF_WDT, NRF_WDT_TASK_START);
 
   Serial.println("Guillemot scanning");
-  Serial.println("BOOTED:Guillemot");
+  Serial.print("BOOTED: Guillemot-");
+  Serial.println(__TIMESTAMP__);
+  Serial.print("HWID: ");
+  Serial.print(NRF_FICR->DEVICEID[0], HEX);
+  Serial.println(NRF_FICR->DEVICEID[1], HEX);
 }
 
 void loop() {

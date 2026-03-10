@@ -106,7 +106,12 @@ void setup() {
   }
   led::off();
 
-  Serial.println("BOOTED:Uguisu");
+  Serial.print("BOOTED: Uguisu-");
+  Serial.println(__TIMESTAMP__);
+  Serial.print("HWID: ");
+  Serial.print(NRF_FICR->DEVICEID[0], HEX);
+  Serial.println(NRF_FICR->DEVICEID[1], HEX);
+
   Bluefruit.begin();
   Bluefruit.setName("Uguisu");
   Bluefruit.setTxPower(0);
